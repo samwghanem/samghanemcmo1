@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CTAButton from '../components/CTAButton.astro';
+
+const phases = [
+  {
+    n: '01',
+    title: 'Diagnose the Gap',
+    what: "A full audit of your current brand congruence: messaging, positioning, current marketing spend, and where the story your company tells stops matching what your team delivers.",
+    get: 'A written findings document naming exactly where the gap is costing you pipeline.',
+  },
+  {
+    n: '02',
+    title: 'Rebuild the Why Pathway',
+    what: 'Your core message, rebuilt from the ground up using the Why Pathway framework, so every piece of marketing (website, sales deck, ads, hiring pages) says the same true thing.',
+    get: 'A single messaging foundation every future asset gets built from.',
+  },
+  {
+    n: '03',
+    title: 'Install Magnetic Marketing',
+    what: 'Deployment of the specific campaigns and systems built to pull qualified buyers toward you, instead of chasing broad, expensive, low-intent traffic.',
+    get: 'Live campaigns and systems, not a strategy deck that sits in a drawer.',
+  },
+  {
+    n: '04',
+    title: 'Run It Like An Executive',
+    what: 'Ongoing fractional leadership: the same accountability and judgment a full-time CMO brings, at a fraction of the cost and without a long hiring cycle.',
+    get: 'A marketing function that runs itself instead of running through you.',
+  },
+];
+---
+
+<BaseLayout
+  title="How Fractional CMO Engagements Work | Sam Ghanem"
+  description="A full breakdown of the Congruent Brands Convert system - how a Fractional CMO engagement with Sam Ghanem actually runs, phase by phase."
+  canonicalPath="/how-it-works"
+>
+  <section class="hero">
+    <div class="section-inner">
+      <p class="eyebrow">The Mechanism</p>
+      <h1>One System. Four Phases. No Guesswork.</h1>
+      <hr class="dz-draw" />
+      <p class="subhead">
+        Here's exactly what happens when you bring in a Fractional CMO instead of
+        another agency or another internal hire.
+      </p>
+    </div>
+  </section>
+
+  {phases.map((phase, i) => (
+    <section class={i % 2 === 1 ? 'section-dark' : ''}>
+      <div class="section-inner phase dz-reveal">
+        <span class="phase-number">{phase.n}</span>
+        <h2>{phase.title}</h2>
+        <p><strong>What it is:</strong> {phase.what}</p>
+        <p><strong>What you get:</strong> {phase.get}</p>
+      </div>
+    </section>
+  ))}
+
+  <section class="final-cta">
+    <div class="section-inner">
+      <h2>Ready to Start With Phase One?</h2>
+      <CTAButton href="/apply" label="Apply to Work Together" />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { padding-top: clamp(3rem, 8vw, 5rem); }
+  .subhead {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    max-width: 38rem;
+  }
+  .phase {
+    position: relative;
+  }
+  .phase-number {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--gold-deep);
+    letter-spacing: 0.1em;
+  }
+  .section-dark .phase-number { color: var(--gold); }
+  .phase p strong { color: inherit; }
+  .final-cta {
+    text-align: center;
+  }
+</style>

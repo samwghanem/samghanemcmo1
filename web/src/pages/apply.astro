@@ -1,0 +1,126 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Apply to Work With Sam Ghanem, Fractional CMO"
+  description="Apply for a Fractional CMO engagement, for established, revenue-scaled companies."
+  canonicalPath="/apply"
+>
+  <section class="hero">
+    <div class="section-inner">
+      <p class="eyebrow">Application</p>
+      <h1>Let's See If This Is A Fit</h1>
+      <p class="subhead">
+        This is a short qualification application, not a sales call. Answer honestly.
+        If your company has real scale and the marketing gap is real, you'll hear back
+        directly from Sam.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
+      <!--
+        FORM DESTINATION: not yet decided (see master plan Section 7 / handoff note).
+        This is a placeholder <form> with no working action. Before launch, wire this
+        to the chosen destination:
+          - Native Sanity-backed form -> POST to a serverless function that writes
+            an `application` document via the SANITY_TOKEN robot token
+          - Typeform -> replace this block with an embed
+          - Calendly -> replace this block with a qualification-gated booking embed
+      -->
+      <form class="apply-form dz-reveal" data-status="not-wired">
+        <label>
+          Company name
+          <input type="text" name="company" required />
+        </label>
+        <label>
+          Annual revenue range
+          <select name="revenue" required>
+            <option value="">Select one</option>
+            <option value="under-10m">Under $10M</option>
+            <option value="10m-50m">$10M - $50M</option>
+            <option value="50m-100m">$50M - $100M</option>
+            <option value="100m-200m">$100M - $200M</option>
+            <option value="over-200m">Over $200M</option>
+          </select>
+        </label>
+        <label>
+          Your role
+          <input type="text" name="role" required />
+        </label>
+        <label>
+          What's not working in marketing right now?
+          <textarea name="problem" rows="4" required></textarea>
+        </label>
+        <label>
+          Best email
+          <input type="email" name="email" required />
+        </label>
+        <label>
+          Best phone
+          <input type="tel" name="phone" />
+        </label>
+        <button type="submit" disabled title="Form destination not yet configured">
+          Submit Application &rarr;
+        </button>
+        <p class="form-note">
+          Form submission isn't wired up yet &mdash; destination decision pending.
+        </p>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { padding-top: clamp(3rem, 8vw, 5rem); }
+  .subhead {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 38rem;
+  }
+  .apply-form {
+    display: grid;
+    gap: 1.3rem;
+    max-width: 34rem;
+  }
+  .apply-form label {
+    display: grid;
+    gap: 0.4rem;
+    font-family: var(--font-label);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .apply-form input,
+  .apply-form select,
+  .apply-form textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.7em 0.8em;
+    border: 1.5px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    border-radius: 2px;
+  }
+  .apply-form button {
+    font-family: var(--font-label);
+    font-weight: 600;
+    background: var(--ink);
+    color: var(--paper-raised);
+    border: none;
+    padding: 0.85em 1.5em;
+    border-radius: 2px;
+    cursor: not-allowed;
+    opacity: 0.55;
+    width: fit-content;
+  }
+  .form-note {
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+</style>

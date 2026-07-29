@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Privacy Policy | Sam Ghanem"
+  description="Privacy policy for samghanemcmo.com"
+  canonicalPath="/privacy-policy"
+  noindex={true}
+>
+  <section class="hero">
+    <div class="section-inner">
+      <h1>Privacy Policy</h1>
+      <p class="placeholder">
+        This page requires legal review before launch. Do not publish templated
+        privacy policy language &mdash; replace this placeholder with
+        counsel-reviewed content specific to the data this site actually
+        collects (application form submissions, analytics, cookies).
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { padding-top: clamp(3rem, 8vw, 5rem); }
+  .placeholder {
+    font-style: italic;
+    color: var(--ink-soft);
+    max-width: 38rem;
+  }
+</style>

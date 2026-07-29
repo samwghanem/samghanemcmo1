@@ -1,0 +1,67 @@
+---
+interface Stat {
+  value: string;
+  label: string;
+  count?: number;
+  prefix?: string;
+  suffix?: string;
+}
+
+interface Props {
+  stats: Stat[];
+}
+
+const { stats } = Astro.props;
+---
+
+<div class="proof-bar">
+  {stats.map((stat, i) => (
+    <div class="stat dz-reveal" style={`--dz-delay: ${i * 0.1}s`}>
+      {stat.count !== undefined ? (
+        <p
+          class="stat-value"
+          data-dz-count={stat.count}
+          data-dz-prefix={stat.prefix || ''}
+          data-dz-suffix={stat.suffix || ''}
+        >{stat.value}</p>
+      ) : (
+        <p class="stat-value">{stat.value}</p>
+      )}
+      <p class="stat-label">{stat.label}</p>
+    </div>
+  ))}
+</div>
+
+<style>
+  .proof-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin: 2.75rem 0;
+  }
+
+  .stat {
+    background: var(--paper-raised);
+    padding: 1.6rem 1.3rem;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: clamp(1.3rem, 1.6vw + 0.8rem, 1.65rem);
+    margin: 0 0 0.3em;
+    color: var(--ink);
+  }
+
+  .stat-label {
+    font-family: var(--font-label);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+</style>

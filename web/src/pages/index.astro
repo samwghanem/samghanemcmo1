@@ -1,0 +1,206 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CTAButton from '../components/CTAButton.astro';
+import ProofBar from '../components/ProofBar.astro';
+import QualificationGate from '../components/QualificationGate.astro';
+import FAQAccordion from '../components/FAQAccordion.astro';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'Sam Ghanem, Fractional CMO',
+  url: 'https://samghanemcmo.com',
+  founder: {
+    '@type': 'Person',
+    name: 'Sam Ghanem',
+    jobTitle: 'Fractional CMO',
+  },
+  areaServed: 'US',
+  description:
+    'Fractional CMO services for established, revenue-scaled companies.',
+};
+
+const stats = [
+  { value: '25+', label: 'Yrs Brand & Marketing Strategy', count: 25, suffix: '+' },
+  { value: '21', label: 'Person Agency Built (SG INK)', count: 21 },
+  { value: '6+', label: 'Enterprise Clients Served', count: 6, suffix: '+' },
+  { value: "'02", label: 'Career Began' },
+];
+
+const faqs = [
+  {
+    question: "What exactly does a Fractional CMO do that an agency doesn't?",
+    answer:
+      "An agency executes tasks. A Fractional CMO owns outcomes: diagnosing why marketing isn't converting, rebuilding the message, and running the system with the same accountability a full-time executive would carry.",
+  },
+  {
+    question: 'Who is this actually for?',
+    answer:
+      "Companies who've moved well past the startup stage - real revenue, an actual sales team, a P&L to defend - but haven't built out a full in-house marketing leadership team yet. If you're pre-revenue or still finding product-market fit, this isn't the right fit. If you're a public enterprise with a marketing department twelve layers deep, you probably don't need this either.",
+  },
+  {
+    question: 'How fast will I see results?',
+    answer:
+      'The diagnostic phase alone typically surfaces the gap within the first few weeks. Full system deployment and measurable pipeline impact follows the four-phase process outlined on the How It Works page.',
+  },
+];
+---
+
+<BaseLayout
+  title="Fractional CMO for Established Companies | Sam Ghanem"
+  description="Sam Ghanem is a Fractional CMO for established, revenue-scaled companies. Enterprise-grade marketing leadership, without the enterprise headcount."
+  canonicalPath="/"
+  jsonLd={jsonLd}
+>
+  <section class="hero">
+    <div class="section-inner">
+      <p class="eyebrow">Fractional CMO for Serious Companies</p>
+      <h1 class="dz-split">
+        <span class="dz-split-line"><span>Your Marketing Doesn't Need Another Hire.</span></span>
+        <span class="dz-split-line"><span>It Needs An Executive.</span></span>
+      </h1>
+      <p class="subhead">
+        You built a real company - past the startup phase, with an actual sales team
+        and a P&amp;L to defend. Your marketing still runs like it's day one. That gap
+        is costing you every quarter it stays open.
+      </p>
+      <CTAButton href="/apply" label="See If You Qualify" />
+    </div>
+  </section>
+
+  <section class="proof">
+    <div class="section-inner">
+      <ProofBar stats={stats} />
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
+      <p class="eyebrow">The Diagnosis</p>
+      <hr class="dz-draw" />
+      <h2 class="dz-reveal">You Don't Have a Marketing Problem. You Have a Messaging Problem.</h2>
+      <p class="dz-reveal" style="--dz-delay: 0.1s">
+        Most companies at your revenue level didn't stall because they stopped
+        advertising. They stalled because the brand stopped being congruent: what you
+        say, what you sell, and what your team actually delivers pulled apart. No amount
+        of ad spend fixes that. A Fractional CMO does.
+      </p>
+      <CTAButton href="/how-it-works" label="See the System" variant="ghost-light" />
+    </div>
+  </section>
+
+  <section class="section-dark">
+    <div class="section-inner">
+      <p class="eyebrow">The Mechanism</p>
+      <hr class="dz-draw" />
+      <h2 class="dz-reveal">The Congruent Brands Convert System</h2>
+      <p class="dz-reveal" style="--dz-delay: 0.1s">
+        This isn't a grab-bag of marketing tactics. It's a repeatable system built over
+        two decades and sharpened by enterprise clients who don't tolerate guesswork.
+      </p>
+      <ol class="phase-list">
+        <li class="dz-reveal" style="--dz-delay: 0.15s"><strong>Diagnose the Gap</strong> &mdash; audit brand, messaging, and go-to-market against what's actually converting.</li>
+        <li class="dz-reveal" style="--dz-delay: 0.22s"><strong>Rebuild the Why Pathway</strong> &mdash; rebuild your core message so every channel says the same true thing.</li>
+        <li class="dz-reveal" style="--dz-delay: 0.29s"><strong>Install Magnetic Marketing</strong> &mdash; deploy the systems and campaigns that pull the right buyers in, not just more traffic.</li>
+        <li class="dz-reveal" style="--dz-delay: 0.36s"><strong>Run It Like an Executive</strong> &mdash; ongoing fractional leadership, not a one-time deliverable.</li>
+      </ol>
+      <CTAButton href="/results" label="See the Proof" variant="ghost-dark" />
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
+      <QualificationGate
+        headline="This Is Built For A Specific Kind Of Company"
+        body="This isn't for early-stage startups and it isn't for public enterprises with a marketing department twelve layers deep. This is for companies with real scale, a sales team, and a P&L that reflects it, who need executive-level marketing leadership without adding a six-figure hire. If that's you, keep going."
+        ctaLabel="Apply to Work Together"
+        ctaHref="/apply"
+      />
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
+      <p class="eyebrow">Frequently Asked</p>
+      <hr class="dz-draw" />
+      <h2 class="dz-reveal">Before You Apply</h2>
+      <FAQAccordion items={faqs} />
+    </div>
+  </section>
+
+  <section class="section-dark final-cta">
+    <div class="section-inner">
+      <h2>See If You Qualify</h2>
+      <p>
+        A quick application, not a sales call. If it's a fit, we'll talk. If it's not,
+        I'll tell you that too.
+      </p>
+      <CTAButton
+        href="/apply"
+        label="Start My Application"
+        pulse={true}
+        pulseColor="rgba(237, 234, 226, 0.32)"
+      />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero {
+    padding-top: clamp(3.5rem, 10vw, 7rem);
+  }
+
+  .subhead {
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    max-width: 40rem;
+    margin-bottom: 1.6em;
+  }
+
+  .proof {
+    padding-top: 0;
+  }
+
+  .phase-list {
+    list-style: none;
+    counter-reset: phase;
+    padding: 0;
+    margin: 1.8em 0 2em;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .phase-list li {
+    counter-increment: phase;
+    position: relative;
+    padding-left: 2.6rem;
+    color: rgba(237, 234, 226, 0.85);
+  }
+
+  .phase-list li::before {
+    content: counter(phase);
+    position: absolute;
+    left: 0;
+    top: 0.05em;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    width: 1.7rem;
+    height: 1.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+  }
+
+  .phase-list strong {
+    color: var(--paper-raised);
+  }
+
+  .final-cta p {
+    max-width: 34rem;
+    color: rgba(237, 234, 226, 0.8);
+  }
+</style>

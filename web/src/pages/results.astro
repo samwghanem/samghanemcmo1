@@ -1,0 +1,91 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CTAButton from '../components/CTAButton.astro';
+import ProofBar from '../components/ProofBar.astro';
+
+const stats = [
+  { value: '25+', label: 'Yrs Brand & Marketing Strategy', count: 25, suffix: '+' },
+  { value: '21', label: 'Person Agency Built (SG INK)', count: 21 },
+  { value: '6+', label: 'Enterprise Clients Served', count: 6, suffix: '+' },
+  { value: "'02", label: 'Career Began' },
+];
+
+const clients = ['Lockheed Martin', 'IBM', 'Danaher', 'Mercedes-Benz', 'Carrier', 'Thermo Fisher'];
+---
+
+<BaseLayout
+  title="Results and Proof | Sam Ghanem, Fractional CMO"
+  description="Real numbers, real brands, real outcomes from Sam Ghanem's fractional CMO and agency work."
+  canonicalPath="/results"
+>
+  <section class="hero">
+    <div class="section-inner">
+      <p class="eyebrow">Proof</p>
+      <h1>The Track Record Behind The System</h1>
+      <ProofBar stats={stats} />
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
+      <p class="eyebrow">Enterprise Clients Served</p>
+      <h2>Brands That Don't Tolerate Guesswork</h2>
+      <ul class="client-list">
+        {clients.map((c) => <li class="dz-lift">{c}</li>)}
+      </ul>
+      <p class="note">
+        Client logos used with permission where required. Confirm usage rights before
+        publishing any individual client logo assets.
+      </p>
+    </div>
+  </section>
+
+  <section class="section-dark">
+    <div class="section-inner">
+      <p class="eyebrow">Client Results</p>
+      <h2>Coming Soon</h2>
+      <p class="placeholder-note">
+        Real client engagement results will populate here from Sanity `testimonial`
+        documents. Do not launch this section with placeholder testimonials &mdash;
+        populate from actual client outcomes before go-live.
+      </p>
+    </div>
+  </section>
+
+  <section class="final-cta">
+    <div class="section-inner">
+      <h2>See If Your Company Qualifies</h2>
+      <CTAButton href="/apply" label="Apply to Work Together" nudge={true} />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero { padding-top: clamp(3rem, 8vw, 5rem); }
+  .client-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1rem;
+    margin: 1.5em 0;
+  }
+  .client-list li {
+    font-family: var(--font-label);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+  }
+  .note {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .placeholder-note {
+    color: rgba(237, 234, 226, 0.7);
+    font-style: italic;
+  }
+  .final-cta { text-align: center; }
+</style>

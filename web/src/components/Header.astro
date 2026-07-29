@@ -1,0 +1,96 @@
+---
+const navItems = [
+  { label: 'How It Works', path: '/how-it-works' },
+  { label: 'Results', path: '/results' },
+  { label: 'About', path: '/about' },
+];
+---
+
+<header class="site-header">
+  <a class="wordmark" href="/">Sam Ghanem, CMO</a>
+  <nav>
+    {navItems.map((item) => (
+      <a href={item.path}>{item.label}</a>
+    ))}
+    <a class="apply-link" href="/apply">Apply</a>
+  </nav>
+</header>
+
+<style>
+  .site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem clamp(1.25rem, 5vw, 3rem);
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.05rem;
+    text-decoration: none;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: clamp(1.1rem, 2vw, 2rem);
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  nav a {
+    position: relative;
+    text-decoration: none;
+    color: var(--ink-soft);
+    padding-bottom: 2px;
+    transition: color 0.15s ease;
+  }
+
+  nav a:not(.apply-link)::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 100%; height: 1px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  nav a:hover {
+    color: var(--ink);
+  }
+
+  nav a:not(.apply-link):hover::after {
+    transform: scaleX(1);
+  }
+
+  .apply-link {
+    color: var(--ink) !important;
+    font-weight: 600;
+    border: 1px solid var(--ink);
+    padding: 0.45em 0.9em !important;
+    border-radius: 2px;
+  }
+
+  .apply-link:hover {
+    background: var(--ink);
+    color: var(--paper) !important;
+    border-color: var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    nav a:not(.apply-link) {
+      display: none;
+    }
+  }
+</style>

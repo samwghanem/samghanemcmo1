@@ -1,0 +1,81 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  variant?: 'primary' | 'ghost-dark' | 'ghost-light';
+  pulse?: boolean;
+  nudge?: boolean;
+  pulseColor?: string;
+}
+
+const { href, label, variant = 'primary', pulse = false, nudge = false, pulseColor } = Astro.props;
+const dazzleClass = [pulse && 'dz-pulse', nudge && 'dz-nudge'].filter(Boolean).join(' ');
+const style = pulse && pulseColor ? `--dz-pulse-color: ${pulseColor}` : undefined;
+---
+
+<a class={`cta cta-${variant} ${dazzleClass}`} href={href} style={style}>
+  {label}
+</a>
+
+<style>
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.88rem;
+    letter-spacing: 0.01em;
+    padding: 0.85em 1.5em;
+    border-radius: 2px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+      box-shadow 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .cta:hover {
+    transform: translateY(-3px);
+  }
+
+  .cta-primary {
+    background: var(--ink);
+    color: var(--paper-raised);
+    border-color: var(--ink);
+    box-shadow: 0 2px 0 rgba(20, 32, 43, 0.2);
+  }
+  .cta-primary:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow:
+      0 2px 4px rgba(20, 32, 43, 0.12),
+      0 10px 20px rgba(230, 90, 43, 0.28);
+  }
+
+  .cta-ghost-dark {
+    border-color: var(--line-on-dark);
+    color: var(--paper-raised);
+  }
+  .cta-ghost-dark:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+  }
+
+  .cta-ghost-light {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .cta-ghost-light:hover {
+    background: var(--ink);
+    color: var(--paper-raised);
+    box-shadow: 0 8px 18px rgba(20, 32, 43, 0.22);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cta:hover { transform: none; }
+  }
+</style>
