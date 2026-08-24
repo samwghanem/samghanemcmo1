@@ -6,7 +6,7 @@ const NOINDEX_PATHS = ['/privacy-policy'];
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://samghanemcmo.com',
+  site: 'https://www.samghanemcmo.com',
   output: 'static',
   integrations: [
     sitemap({
