@@ -51,7 +51,7 @@ const faqs = [
     _type: 'faq',
     question: "What exactly does a Fractional CMO do that an agency doesn't?",
     answer:
-      "An agency executes tasks. A Fractional CMO owns outcomes: diagnosing why marketing isn't converting, rebuilding the message, and running the system with the same accountability a full-time executive would carry.",
+      "An agency executes tasks you hand it. A Fractional CMO owns the outcome: diagnosing why marketing isn't converting, rebuilding the message underneath it, and running the whole system with the same accountability a full-time executive would carry - not the accountability of a vendor.",
   },
   {
     _id: 'faq-who-is-this-for',
@@ -65,7 +65,14 @@ const faqs = [
     _type: 'faq',
     question: 'How fast will I see results?',
     answer:
-      'The diagnostic phase alone typically surfaces the gap within the first few weeks. Full system deployment and measurable pipeline impact follows the four-phase process outlined on the How It Works page.',
+      "The diagnostic phase alone usually surfaces the gap within the first few weeks - most companies are surprised how fast it's visible once someone's actually looking for it. Full deployment and measurable pipeline impact follow the four-phase process outlined on the How It Works page.",
+  },
+  {
+    _id: 'faq-investment',
+    _type: 'faq',
+    question: "What's the investment?",
+    answer:
+      "Engagements start at $7,500 per month. Exact scope depends on what phase you're in and how much of the system needs rebuilding, but that's the floor. Better to know that now than after an application.",
   },
 ];
 

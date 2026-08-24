@@ -8,14 +8,24 @@ const stats = [
   { value: '21', label: 'Person Agency Built (SG INK)', count: 21 },
   { value: '6+', label: 'Enterprise Clients Served', count: 6, suffix: '+' },
   { value: "'02", label: 'Career Began' },
+  { value: '99.98%', label: 'ISO Audit Pass Rate, 10+ Yrs Running' },
+  { value: '3 Wks', label: 'Fastest Full Brand Deployment' },
 ];
 
-const clients = ['Lockheed Martin', 'IBM', 'Danaher', 'Mercedes-Benz', 'Carrier', 'Thermo Fisher'];
+const clients = ['Lockheed Martin', 'IBM', 'Danaher', 'Beckman Coulter', 'Mercedes-Benz', 'Carrier', 'Thermo Fisher'];
+
+const outcomes = [
+  { metric: 'Lead Quality', range: '+25-40%', window: 'within 90 days' },
+  { metric: 'Funnel Conversion', range: '2-5x', window: 'improvement' },
+  { metric: 'Sales Cycle Time', range: '-30-50%', window: 'reduction' },
+  { metric: 'Brand Consistency', range: '<60% -> 90%+', window: 'within six months' },
+  { metric: 'Team Cohesion', range: '~60%', window: 'improvement in six months' },
+];
 ---
 
 <BaseLayout
   title="Results and Proof | Sam Ghanem, Fractional CMO"
-  description="Real numbers, real brands, real outcomes from Sam Ghanem's fractional CMO and agency work."
+  description="Real numbers, real enterprise brands, real outcomes - the track record behind Sam Ghanem's fractional CMO and agency work."
   canonicalPath="/results"
 >
   <section class="hero">
@@ -33,21 +43,37 @@ const clients = ['Lockheed Martin', 'IBM', 'Danaher', 'Mercedes-Benz', 'Carrier'
       <ul class="client-list">
         {clients.map((c) => <li class="dz-lift">{c}</li>)}
       </ul>
-      <p class="note">
-        Client logos used with permission where required. Confirm usage rights before
-        publishing any individual client logo assets.
-      </p>
     </div>
   </section>
 
   <section class="section-dark">
     <div class="section-inner">
+      <p class="eyebrow">What Moves When The System Runs</p>
+      <h2 class="dz-reveal">Typical Ranges Across Engagements</h2>
+      <ul class="outcomes-list">
+        {outcomes.map((o, i) => (
+          <li class="dz-reveal" style={`--dz-delay: ${i * 0.07}s`}>
+            <span class="outcome-range">{o.range}</span>
+            <span class="outcome-detail"><strong>{o.metric}</strong> - {o.window}</span>
+          </li>
+        ))}
+      </ul>
+      <p class="outcomes-note">
+        Ranges reflect typical outcomes observed across engagements. Individual
+        results vary by starting position, industry, and how much of the system
+        gets adopted.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-inner">
       <p class="eyebrow">Client Results</p>
-      <h2>Coming Soon</h2>
+      <h2>Case Studies Coming Soon</h2>
       <p class="placeholder-note">
-        Real client engagement results will populate here from Sanity `testimonial`
-        documents. Do not launch this section with placeholder testimonials &mdash;
-        populate from actual client outcomes before go-live.
+        We're finishing the writeups on recent engagements now. In the meantime,
+        reach out directly and Sam will walk you through specific outcomes for
+        companies like yours.
       </p>
     </div>
   </section>
@@ -78,14 +104,43 @@ const clients = ['Lockheed Martin', 'IBM', 'Danaher', 'Mercedes-Benz', 'Carrier'
     border: 1px solid var(--line);
     background: var(--paper-raised);
   }
-  .note {
-    font-size: 0.85rem;
+  .placeholder-note {
     color: var(--ink-soft);
     font-style: italic;
   }
-  .placeholder-note {
-    color: rgba(237, 234, 226, 0.7);
+  .outcomes-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.8em 0 1.2em;
+    display: grid;
+    gap: 1rem;
+  }
+  .outcomes-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line-on-dark);
+  }
+  .outcome-range {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--gold);
+    min-width: 6.5rem;
+    flex-shrink: 0;
+  }
+  .outcome-detail {
+    color: rgba(237, 234, 226, 0.85);
+  }
+  .outcome-detail strong {
+    color: var(--paper-raised);
+  }
+  .outcomes-note {
+    font-size: 0.85rem;
+    color: rgba(237, 234, 226, 0.6);
     font-style: italic;
+    max-width: 36rem;
   }
   .final-cta { text-align: center; }
 </style>

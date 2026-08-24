@@ -12,9 +12,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p class="eyebrow">Application</p>
       <h1>Let's See If This Is A Fit</h1>
       <p class="subhead">
-        This is a short qualification application, not a sales call. Answer honestly.
-        If your company has real scale and the marketing gap is real, you'll hear back
-        directly from Sam.
+        This is a short qualification application, not a sales pitch. Answer
+        honestly - there's no scoring you can game here. If your company has real
+        scale and the gap is real, you'll hear back directly from Sam. If it's not
+        a fit, you'll hear that too.
+      </p>
+      <p class="investment-note">
+        Engagements start at $7,500/month. If that's outside your range right now,
+        better to know before either of us spends time on an application.
       </p>
     </div>
   </section>
@@ -62,11 +67,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           Best phone
           <input type="tel" name="phone" />
         </label>
-        <button type="submit" disabled title="Form destination not yet configured">
+        <button type="submit" disabled title="Applications open shortly">
           Submit Application &rarr;
         </button>
         <p class="form-note">
-          Form submission isn't wired up yet &mdash; destination decision pending.
+          Applications open shortly. Check back soon, or reach out directly in
+          the meantime.
         </p>
       </form>
     </div>
@@ -79,6 +85,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 1.05rem;
     color: var(--ink-soft);
     max-width: 38rem;
+  }
+  .investment-note {
+    font-family: var(--font-label);
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--ink);
+    max-width: 38rem;
+    margin-top: 1.2em;
+    padding: 0.9em 1.1em;
+    border-left: 2px solid var(--gold);
+    background: var(--paper-raised);
   }
   .apply-form {
     display: grid;
