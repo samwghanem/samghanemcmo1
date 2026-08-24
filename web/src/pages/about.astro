@@ -20,7 +20,11 @@ import CTAButton from '../components/CTAButton.astro';
 
   <section>
     <div class="section-inner prose">
-      <p class="dz-reveal">
+      <p class="pull-statement dz-reveal">
+        A coach helps you think. A consultant hands you a deck. A CMO runs the
+        department.
+      </p>
+      <p class="dz-reveal" style="--dz-delay: 0.04s">
         Sam Ghanem's career began in 2002. She is the Founder and CMO of SG INK, a
         full-service printing, branding, and marketing agency she built into a
         21-person team serving enterprise brands including Lockheed Martin, IBM,
@@ -64,6 +68,15 @@ import CTAButton from '../components/CTAButton.astro';
   .prose {
     max-width: 42rem;
     font-size: 1.05rem;
+  }
+  .pull-statement {
+    font-family: var(--font-display);
+    font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+    line-height: 1.35;
+    color: var(--ink);
+    margin-bottom: 1.4em;
+    padding-bottom: 1.1em;
+    border-bottom: 1px solid var(--line);
   }
   .final-cta { text-align: center; }
 </style>

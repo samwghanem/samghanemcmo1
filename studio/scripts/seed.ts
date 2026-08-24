@@ -61,6 +61,13 @@ const faqs = [
       "Companies who've moved well past the startup stage - real revenue, an actual sales team, a P&L to defend - but haven't built out a full in-house marketing leadership team yet. If you're pre-revenue or still finding product-market fit, this isn't the right fit. If you're a public enterprise with a marketing department twelve layers deep, you probably don't need this either.",
   },
   {
+    _id: 'faq-mission-driven',
+    _type: 'faq',
+    question: 'Do you work with any company that can afford it?',
+    answer:
+      "No. Revenue gets you in the room, but it's not the qualifier. If you can't say why the business exists beyond the number on the P&L - and actually believe it - we're probably not a fit. Growth for its own sake doesn't hold up long enough to be worth building on.",
+  },
+  {
     _id: 'faq-how-fast',
     _type: 'faq',
     question: 'How fast will I see results?',
