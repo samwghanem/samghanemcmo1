@@ -8,14 +8,25 @@ import CTAButton from '../components/CTAButton.astro';
   title="About Sam Ghanem | Fractional CMO"
   description="Sam Ghanem is a Fractional CMO, agency founder, and speaker with a career built since 2002 on brand and marketing systems for enterprise clients."
   canonicalPath="/about"
+  ogImage="/sam-ghanem-headshot.jpg"
 >
   <section class="hero">
-    <div class="section-inner">
-      <p class="eyebrow">About</p>
-      <h1 class="dz-split">
-        <span class="dz-split-line"><span>I Live One Big Life.</span></span>
-        <span class="dz-split-line"><span>My Business Results Reflect It.</span></span>
-      </h1>
+    <div class="section-inner hero-grid">
+      <div class="hero-text">
+        <p class="eyebrow">About</p>
+        <h1 class="dz-split">
+          <span class="dz-split-line"><span>I Live One Big Life.</span></span>
+          <span class="dz-split-line"><span>My Business Results Reflect It.</span></span>
+        </h1>
+      </div>
+      <div class="hero-image dz-reveal" style="--dz-delay: 0.1s">
+        <img
+          src="/sam-ghanem-headshot.jpg"
+          alt="Sam Ghanem, Fractional CMO"
+          width="600"
+          height="600"
+        />
+      </div>
     </div>
   </section>
 
@@ -66,6 +77,32 @@ import CTAButton from '../components/CTAButton.astro';
 
 <style>
   .hero { padding-top: clamp(3rem, 8vw, 5rem); }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+  .hero-image img {
+    width: 100%;
+    max-width: 22rem;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+    filter: grayscale(0.15);
+  }
+  @media (max-width: 800px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+    .hero-image {
+      order: -1;
+    }
+    .hero-image img {
+      max-width: 14rem;
+    }
+  }
   .prose {
     max-width: 42rem;
     font-size: 1.05rem;
