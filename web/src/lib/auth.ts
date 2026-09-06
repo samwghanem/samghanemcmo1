@@ -9,7 +9,7 @@ function hashPassword(password: string): string {
 }
 
 export function checkPassword(candidate: string): boolean {
-  const correct = import.meta.env.DASHBOARD_PASSWORD;
+  const correct = process.env.DASHBOARD_PASSWORD;
   if (!correct) {
     throw new Error('Missing DASHBOARD_PASSWORD environment variable.');
   }
@@ -17,7 +17,7 @@ export function checkPassword(candidate: string): boolean {
 }
 
 export function setAuthCookie(cookies: AstroCookies) {
-  const correct = import.meta.env.DASHBOARD_PASSWORD;
+  const correct = process.env.DASHBOARD_PASSWORD;
   cookies.set(COOKIE_NAME, hashPassword(correct), {
     path: '/',
     httpOnly: true,
@@ -32,7 +32,7 @@ export function clearAuthCookie(cookies: AstroCookies) {
 }
 
 export function isAuthenticated(cookies: AstroCookies): boolean {
-  const correct = import.meta.env.DASHBOARD_PASSWORD;
+  const correct = process.env.DASHBOARD_PASSWORD;
   if (!correct) return false;
   const cookie = cookies.get(COOKIE_NAME)?.value;
   if (!cookie) return false;

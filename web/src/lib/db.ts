@@ -18,7 +18,7 @@ export interface Lead {
 // string POSTGRES_DATABASE_URL for this project (prefix "POSTGRES" + Neon's
 // default "DATABASE_URL"), not the plain POSTGRES_URL @vercel/postgres
 // defaults to - so we point it there explicitly instead.
-const pool = createPool({ connectionString: import.meta.env.POSTGRES_DATABASE_URL });
+const pool = createPool({ connectionString: process.env.POSTGRES_DATABASE_URL });
 const sql = pool.sql.bind(pool);
 
 // Creates the leads table if it doesn't already exist. Safe to call on every

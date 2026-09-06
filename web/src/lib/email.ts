@@ -5,8 +5,8 @@ import type { Lead } from './db';
 // authenticated with an app-specific password. No third-party email service
 // involved - this is just her own inbox sending the message.
 function getTransporter() {
-  const user = import.meta.env.NOTIFY_EMAIL_USER;
-  const pass = import.meta.env.NOTIFY_EMAIL_APP_PASSWORD;
+  const user = process.env.NOTIFY_EMAIL_USER;
+  const pass = process.env.NOTIFY_EMAIL_APP_PASSWORD;
 
   if (!user || !pass) {
     throw new Error(
@@ -21,7 +21,7 @@ function getTransporter() {
 }
 
 export async function sendLeadNotification(lead: Lead) {
-  const to = import.meta.env.NOTIFY_EMAIL_USER;
+  const to = process.env.NOTIFY_EMAIL_USER;
   const transporter = getTransporter();
 
   const revenueLabels: Record<string, string> = {
@@ -33,7 +33,7 @@ export async function sendLeadNotification(lead: Lead) {
   };
 
   await transporter.sendMail({
-    from: `"Fractional CMO Applications" <${import.meta.env.NOTIFY_EMAIL_USER}>`,
+    from: `"Fractional CMO Applications" <${process.env.NOTIFY_EMAIL_USER}>`,
     to,
     replyTo: lead.email,
     subject: `New Application: ${lead.company}`,
