@@ -13,8 +13,11 @@
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/vercel": "^11.0.10",
     "@sanity/client": "^7.25.0",
     "@sanity/image-url": "^2.1.1",
-    "astro": "^7.1.5"
+    "@vercel/postgres": "^0.10.0",
+    "astro": "^7.1.5",
+    "nodemailer": "^10.0.0"
   }
 }

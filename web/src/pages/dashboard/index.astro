@@ -1,0 +1,217 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isAuthenticated } from '../../lib/auth';
+import { getAllLeads, type LeadStatus } from '../../lib/db';
+
+if (!isAuthenticated(Astro.cookies)) {
+  return Astro.redirect('/dashboard/login');
+}
+
+const leads = await getAllLeads();
+
+const COLUMNS: { key: LeadStatus; label: string }[] = [
+  { key: 'new', label: 'New' },
+  { key: 'reviewing', label: 'Reviewing' },
+  { key: 'call_booked', label: 'Call Booked' },
+  { key: 'client', label: 'Client' },
+  { key: 'not_a_fit', label: 'Not a Fit' },
+];
+
+const REVENUE_LABELS: Record<string, string> = {
+  'under-10m': 'Under $10M',
+  '10m-50m': '$10M - $50M',
+  '50m-100m': '$50M - $100M',
+  '100m-200m': '$100M - $200M',
+  'over-200m': 'Over $200M',
+};
+---
+
+<BaseLayout
+  title="Applicant Dashboard | Sam Ghanem, CMO"
+  description="Private applicant dashboard."
+  canonicalPath="/dashboard"
+  noindex={true}
+>
+  <section class="dashboard-section">
+    <div class="dashboard-header">
+      <div>
+        <p class="eyebrow">Fractional CMO</p>
+        <h1>Applicant Pipeline</h1>
+      </div>
+      <p class="count">{leads.length} total applicant{leads.length === 1 ? '' : 's'}</p>
+    </div>
+
+    <div class="board">
+      {COLUMNS.map((col) => {
+        const columnLeads = leads.filter((l) => l.status === col.key);
+        return (
+          <div class="column" data-status={col.key}>
+            <div class="column-header">
+              <span>{col.label}</span>
+              <span class="col-count">{columnLeads.length}</span>
+            </div>
+            <div class="cards">
+              {columnLeads.map((lead) => (
+                <div class="card" data-id={lead.id}>
+                  <p class="card-company">{lead.company}</p>
+                  <p class="card-meta">{REVENUE_LABELS[lead.revenue_range] ?? lead.revenue_range} &middot; {lead.role}</p>
+                  <p class="card-problem">{lead.problem}</p>
+                  <p class="card-contact">
+                    <a href={`mailto:${lead.email}`}>{lead.email}</a>
+                    {lead.phone && <span> &middot; {lead.phone}</span>}
+                  </p>
+                  <select class="status-select" data-id={lead.id}>
+                    {COLUMNS.map((c) => (
+                      <option value={c.key} selected={c.key === lead.status}>
+                        Move to: {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  document.querySelectorAll('.status-select').forEach((select) => {
+    select.addEventListener('change', async (e) => {
+      const target = e.target as HTMLSelectElement;
+      const id = target.dataset.id;
+      const status = target.value;
+
+      const res = await fetch(`/api/leads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to update status. Please try again.');
+      }
+    });
+  });
+</script>
+
+<style>
+  .dashboard-section {
+    padding: 2rem clamp(1rem, 4vw, 2.5rem);
+    max-width: 100rem;
+    margin: 0 auto;
+  }
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin: 0;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin: 0.1em 0 0;
+  }
+  .count {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    font-family: var(--font-label);
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(15rem, 1fr));
+    gap: 1rem;
+    overflow-x: auto;
+  }
+  .column {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    min-width: 15rem;
+  }
+  .column-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.8em 1em;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .col-count {
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.7rem;
+    min-height: 4rem;
+  }
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.8em 0.9em;
+    font-size: 0.85rem;
+  }
+  .card-company {
+    font-family: var(--font-label);
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 0.3em;
+  }
+  .card-meta {
+    color: var(--gold-deep);
+    font-size: 0.78rem;
+    margin: 0 0 0.5em;
+  }
+  .card-problem {
+    color: var(--ink-soft);
+    font-size: 0.8rem;
+    margin: 0 0 0.6em;
+    max-height: 5.5em;
+    overflow-y: auto;
+    line-height: 1.4;
+  }
+  .card-contact {
+    font-size: 0.78rem;
+    margin: 0 0 0.6em;
+  }
+  .card-contact a {
+    color: var(--ink);
+  }
+  .status-select {
+    width: 100%;
+    font-size: 0.78rem;
+    padding: 0.4em;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--paper-raised);
+    font-family: var(--font-label);
+  }
+  @media (max-width: 900px) {
+    .board {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

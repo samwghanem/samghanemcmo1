@@ -1,4 +1,5 @@
 ---
+export const prerender = true;
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
@@ -27,15 +28,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <section>
     <div class="section-inner">
       <!--
-        FORM DESTINATION: not yet decided (see master plan Section 7 / handoff note).
-        This is a placeholder <form> with no working action. Before launch, wire this
-        to the chosen destination:
-          - Native Sanity-backed form -> POST to a serverless function that writes
-            an `application` document via the SANITY_TOKEN robot token
-          - Typeform -> replace this block with an embed
-          - Calendly -> replace this block with a qualification-gated booking embed
+        Wired to /api/apply (see src/pages/api/apply.ts). Submissions are saved
+        to Postgres and trigger an email notification to the site owner.
       -->
-      <form class="apply-form dz-reveal" data-status="not-wired">
+      <form class="apply-form dz-reveal" id="apply-form">
         <label>
           Company name
           <input type="text" name="company" required />
@@ -67,17 +63,64 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           Best phone
           <input type="tel" name="phone" />
         </label>
-        <button type="submit" disabled title="Applications open shortly">
+        <button type="submit" id="submit-btn">
           Submit Application &rarr;
         </button>
-        <p class="form-note">
-          Applications open shortly. Check back soon, or reach out directly in
-          the meantime.
-        </p>
+        <p class="form-note" id="form-status"></p>
       </form>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  const form = document.getElementById('apply-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const statusMsg = document.getElementById('form-status') as HTMLParagraphElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    statusMsg.textContent = '';
+    statusMsg.className = 'form-note';
+
+    const formData = new FormData(form);
+    const payload = {
+      company: formData.get('company'),
+      revenueRange: formData.get('revenue'),
+      role: formData.get('role'),
+      problem: formData.get('problem'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+    };
+
+    try {
+      const res = await fetch('/api/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        form.style.display = 'none';
+        statusMsg.textContent =
+          "Application received. Sam reviews these personally - you'll hear back directly, either way.";
+        statusMsg.className = 'form-note success';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        statusMsg.textContent = data.error || 'Something went wrong. Please try again.';
+        statusMsg.className = 'form-note error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application →';
+      }
+    } catch {
+      statusMsg.textContent = 'Network error. Please try again or email directly.';
+      statusMsg.className = 'form-note error';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Application →';
+    }
+  });
+</script>
 
 <style>
   .hero { padding-top: clamp(3rem, 8vw, 5rem); }
@@ -131,13 +174,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: none;
     padding: 0.85em 1.5em;
     border-radius: 2px;
-    cursor: not-allowed;
-    opacity: 0.55;
+    cursor: pointer;
     width: fit-content;
+    transition: background 0.15s ease;
+  }
+  .apply-form button:hover:not(:disabled) {
+    background: var(--gold-deep);
+  }
+  .apply-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
   .form-note {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--ink-soft);
-    font-style: italic;
+    min-height: 1.2em;
+  }
+  .form-note.success {
+    color: var(--gold-deep);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .form-note.error {
+    color: var(--stamp-red);
+    font-weight: 600;
   }
 </style>

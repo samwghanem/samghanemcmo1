@@ -1,0 +1,115 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Dashboard Login | Sam Ghanem, CMO"
+  description="Private applicant dashboard."
+  canonicalPath="/dashboard/login"
+  noindex={true}
+>
+  <section class="login-section">
+    <div class="login-box">
+      <p class="eyebrow">Applicant Dashboard</p>
+      <h1>Enter Password</h1>
+      <form id="login-form">
+        <input type="password" id="password" placeholder="Password" required autofocus />
+        <button type="submit">Enter</button>
+      </form>
+      <p id="error-msg" class="error-msg"></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const form = document.getElementById('login-form') as HTMLFormElement;
+  const errorMsg = document.getElementById('error-msg') as HTMLParagraphElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    const password = (document.getElementById('password') as HTMLInputElement).value;
+
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+
+    if (res.ok) {
+      window.location.href = '/dashboard';
+    } else {
+      const data = await res.json().catch(() => ({}));
+      errorMsg.textContent = data.error || 'Incorrect password.';
+    }
+  });
+</script>
+
+<style>
+  .login-section {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .login-box {
+    max-width: 24rem;
+    width: 100%;
+    text-align: center;
+  }
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.5em;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin: 0 0 1.2em;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  input {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.8em 1em;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    border-radius: 2px;
+  }
+  input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  button {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.8em 1em;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: var(--gold-deep);
+  }
+  .error-msg {
+    color: var(--stamp-red);
+    font-size: 0.9rem;
+    margin-top: 1em;
+    min-height: 1.2em;
+  }
+</style>
