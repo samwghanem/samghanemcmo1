@@ -13,6 +13,7 @@ const leads = await getAllLeads();
 const COLUMNS: { key: LeadStatus; label: string }[] = [
   { key: 'new', label: 'New' },
   { key: 'reviewing', label: 'Reviewing' },
+  { key: 'approved', label: 'Approved' },
   { key: 'call_booked', label: 'Call Booked' },
   { key: 'client', label: 'Client' },
   { key: 'not_a_fit', label: 'Not a Fit' },
@@ -54,7 +55,9 @@ const REVENUE_LABELS: Record<string, string> = {
             <div class="cards">
               {columnLeads.map((lead) => (
                 <div class="card" data-id={lead.id}>
-                  <p class="card-company">{lead.company}</p>
+                  <button class="delete-btn" data-id={lead.id} title="Delete this applicant" aria-label="Delete">&times;</button>
+                  <p class="card-company">{lead.name || '(no name)'}</p>
+                  <p class="card-subcompany">{lead.company}</p>
                   <p class="card-meta">{REVENUE_LABELS[lead.revenue_range] ?? lead.revenue_range} &middot; {lead.role}</p>
                   <p class="card-problem">{lead.problem}</p>
                   <p class="card-contact">
@@ -98,6 +101,23 @@ const REVENUE_LABELS: Record<string, string> = {
       }
     });
   });
+
+  document.querySelectorAll('.delete-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const target = e.target as HTMLButtonElement;
+      const id = target.dataset.id;
+
+      if (!confirm('Delete this applicant? This cannot be undone.')) return;
+
+      const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to delete. Please try again.');
+      }
+    });
+  });
 </script>
 
 <style>
@@ -136,7 +156,7 @@ const REVENUE_LABELS: Record<string, string> = {
   }
   .board {
     display: grid;
-    grid-template-columns: repeat(5, minmax(15rem, 1fr));
+    grid-template-columns: repeat(6, minmax(13rem, 1fr));
     gap: 1rem;
     overflow-x: auto;
   }
@@ -168,17 +188,39 @@ const REVENUE_LABELS: Record<string, string> = {
     min-height: 4rem;
   }
   .card {
+    position: relative;
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 3px;
     padding: 0.8em 0.9em;
     font-size: 0.85rem;
   }
+  .delete-btn {
+    position: absolute;
+    top: 0.4em;
+    right: 0.5em;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 0.2em 0.4em;
+  }
+  .delete-btn:hover {
+    color: var(--stamp-red);
+  }
   .card-company {
     font-family: var(--font-label);
     font-weight: 700;
     color: var(--ink);
-    margin: 0 0 0.3em;
+    margin: 0 0 0.15em;
+    padding-right: 1.4em;
+  }
+  .card-subcompany {
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    margin: 0 0 0.5em;
   }
   .card-meta {
     color: var(--gold-deep);

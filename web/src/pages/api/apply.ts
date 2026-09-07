@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { insertLead } from '../../lib/db';
-import { sendLeadNotification } from '../../lib/email';
+import { sendLeadNotification, sendApplicantReceivedEmail } from '../../lib/email';
 
 export const prerender = false;
 
@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
   }
 
+  const name = String(body.name ?? '').trim();
   const company = String(body.company ?? '').trim();
   const revenueRange = String(body.revenueRange ?? '').trim();
   const role = String(body.role ?? '').trim();
@@ -31,9 +32,9 @@ export const POST: APIRoute = async ({ request }) => {
   const phone = body.phone ? String(body.phone).trim() : undefined;
 
   // Basic server-side validation - never trust the client alone.
-  if (!company || !role || !problem || !email) {
+  if (!name || !company || !role || !problem || !email) {
     return new Response(
-      JSON.stringify({ error: 'Company, role, problem, and email are required.' }),
+      JSON.stringify({ error: 'Name, company, role, problem, and email are required.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } }
     );
   }
@@ -52,14 +53,19 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const lead = await insertLead({ company, revenueRange, role, problem, email, phone });
+    const lead = await insertLead({ name, company, revenueRange, role, problem, email, phone });
 
     // Don't let an email hiccup fail the whole submission - the lead is
     // already saved. Log it so it's visible in Vercel's function logs.
     try {
       await sendLeadNotification(lead);
     } catch (emailErr) {
-      console.error('Lead saved but notification email failed:', emailErr);
+      console.error('Lead saved but internal notification email failed:', emailErr);
+    }
+    try {
+      await sendApplicantReceivedEmail(lead);
+    } catch (emailErr) {
+      console.error('Lead saved but applicant confirmation email failed:', emailErr);
     }
 
     return new Response(JSON.stringify({ success: true }), {

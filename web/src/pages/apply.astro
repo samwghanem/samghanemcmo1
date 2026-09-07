@@ -33,6 +33,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       -->
       <form class="apply-form dz-reveal" id="apply-form">
         <label>
+          Your name
+          <input type="text" name="name" required />
+        </label>
+        <label>
           Company name
           <input type="text" name="company" required />
         </label>
@@ -86,6 +90,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     const formData = new FormData(form);
     const payload = {
+      name: formData.get('name'),
       company: formData.get('company'),
       revenueRange: formData.get('revenue'),
       role: formData.get('role'),
@@ -104,7 +109,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       if (res.ok) {
         form.style.display = 'none';
         statusMsg.textContent =
-          "Application received. Sam reviews these personally - you'll hear back directly, either way.";
+          "Application received - check your inbox for confirmation. Sam reviews these personally, and you'll hear back directly within 3-5 business days, either way.";
         statusMsg.className = 'form-note success';
       } else {
         const data = await res.json().catch(() => ({}));
