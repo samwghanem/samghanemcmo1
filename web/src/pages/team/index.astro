@@ -3,7 +3,7 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isTeamAuthenticated, getTeamSessionEmail } from '../../lib/team-auth';
 import { getAllJobs } from '../../lib/team-db';
-import { TEAM_ROSTER, DEPARTMENTS } from '../../lib/team-roster';
+import { TEAM_ROSTER, DEPARTMENTS, avatarUrl } from '../../lib/team-roster';
 
 if (!(await isTeamAuthenticated(Astro.cookies))) {
   return Astro.redirect('/team/login');
@@ -67,10 +67,15 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
               return (
                 <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''}`}>
                   <div class="member-top">
-                    <span class="status-dot"></span>
-                    <strong>{member.name}</strong>
+                    <img class="member-avatar" src={avatarUrl(member.key)} alt={member.name} width="40" height="40" loading="lazy" />
+                    <div>
+                      <div class="name-row">
+                        <span class="status-dot"></span>
+                        <strong>{member.name}</strong>
+                      </div>
+                      <p class="member-role">{member.role}</p>
+                    </div>
                   </div>
-                  <p class="member-role">{member.role}</p>
                   <div class="member-stats">
                     <div><strong>{c.open}</strong><span>Open</span></div>
                     <div><strong>{c.waiting}</strong><span>Waiting on you</span></div>
@@ -357,6 +362,20 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   .member-top {
     display: flex;
     align-items: center;
+    gap: 0.7em;
+    margin-bottom: 0.7em;
+  }
+  .member-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+  .name-row {
+    display: flex;
+    align-items: center;
     gap: 0.4em;
     font-family: var(--font-label);
     font-size: 1rem;
@@ -371,7 +390,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   .member-role {
     font-size: 0.78rem;
     color: var(--ink-soft);
-    margin: 0.2em 0 0.7em;
+    margin: 0.1em 0 0;
   }
   .member-stats {
     display: flex;

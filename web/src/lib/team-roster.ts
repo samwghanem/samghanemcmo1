@@ -66,3 +66,11 @@ export const TEAM_ROSTER: TeamMember[] = [
 export function getMember(key: string): TeamMember | undefined {
   return TEAM_ROSTER.find((m) => m.key === key);
 }
+
+// Illustrated avatar, generated from the member's key so it's stable across
+// reloads. Not a real photo - DiceBear's free, no-key-needed service.
+// Matches the brand's warm/bone background with navy-toned portrait lines.
+export function avatarUrl(key: string): string {
+  const bg = 'edeae2';
+  return `https://api.dicebear.com/10.x/notionists/svg?seed=${encodeURIComponent(key)}&backgroundColor=${bg}`;
+}
