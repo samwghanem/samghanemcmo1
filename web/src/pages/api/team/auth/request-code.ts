@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (!isAllowedEmail(email)) {
     return new Response(
-      JSON.stringify({ error: 'Only @samghanemcmo.com email addresses can access this dashboard.' }),
+      JSON.stringify({ error: 'Only @iamsamghanem.com email addresses can access this dashboard.' }),
       { status: 403, headers: { 'Content-Type': 'application/json' } }
     );
   }

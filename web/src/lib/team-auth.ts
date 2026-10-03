@@ -7,7 +7,7 @@ const pool = createPool({ connectionString: process.env.POSTGRES_DATABASE_URL })
 const sql = pool.sql.bind(pool);
 
 const SESSION_COOKIE = 'team_session';
-const ALLOWED_DOMAIN = '@samghanemcmo.com';
+const ALLOWED_DOMAIN = '@iamsamghanem.com';
 const CODE_TTL_MINUTES = 10;
 const SESSION_TTL_DAYS = 14;
 
