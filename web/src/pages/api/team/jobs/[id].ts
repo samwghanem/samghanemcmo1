@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { isAuthenticated } from '../../../../lib/auth';
+import { isTeamAuthenticated } from '../../../../lib/team-auth';
 import { setJobDecision, deleteJob } from '../../../../lib/team-db';
 
 export const prerender = false;
 
 export const PATCH: APIRoute = async ({ params, request, cookies }) => {
-  if (!isAuthenticated(cookies)) {
+  if (!(await isTeamAuthenticated(cookies))) {
     return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -53,7 +53,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
-  if (!isAuthenticated(cookies)) {
+  if (!(await isTeamAuthenticated(cookies))) {
     return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

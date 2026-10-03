@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { isAuthenticated } from '../../../lib/auth';
+import { isTeamAuthenticated } from '../../../lib/team-auth';
 import { createJob, completeJob, failJob } from '../../../lib/team-db';
 import { getMember } from '../../../lib/team-roster';
 import { runJob } from '../../../lib/team-engine';
@@ -7,7 +7,7 @@ import { runJob } from '../../../lib/team-engine';
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!isAuthenticated(cookies)) {
+  if (!(await isTeamAuthenticated(cookies))) {
     return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },

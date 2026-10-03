@@ -1,0 +1,180 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="The Floor - Login | Sam Ghanem, CMO"
+  description="Private AI team dashboard login."
+  canonicalPath="/team/login"
+  noindex={true}
+>
+  <section class="login-section">
+    <div class="login-box">
+      <p class="eyebrow">The Floor</p>
+      <h1>Sign In</h1>
+
+      <form id="email-form">
+        <input type="email" id="email-input" placeholder="you@samghanemcmo.com" required autofocus />
+        <button type="submit" id="email-submit">Send Code &rarr;</button>
+      </form>
+
+      <form id="code-form" class="hidden">
+        <p class="code-sent-msg">Check your email for a 6-digit code.</p>
+        <input type="text" id="code-input" placeholder="000000" inputmode="numeric" maxlength="6" required />
+        <button type="submit" id="code-submit">Verify &rarr;</button>
+      </form>
+
+      <p id="error-msg" class="error-msg"></p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const emailForm = document.getElementById('email-form') as HTMLFormElement;
+  const codeForm = document.getElementById('code-form') as HTMLFormElement;
+  const emailInput = document.getElementById('email-input') as HTMLInputElement;
+  const codeInput = document.getElementById('code-input') as HTMLInputElement;
+  const errorMsg = document.getElementById('error-msg') as HTMLParagraphElement;
+  const emailSubmit = document.getElementById('email-submit') as HTMLButtonElement;
+  const codeSubmit = document.getElementById('code-submit') as HTMLButtonElement;
+
+  let currentEmail = '';
+
+  emailForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    emailSubmit.disabled = true;
+    emailSubmit.textContent = 'Sending...';
+
+    currentEmail = emailInput.value.trim();
+
+    try {
+      const res = await fetch('/api/team/auth/request-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail }),
+      });
+
+      if (res.ok) {
+        emailForm.classList.add('hidden');
+        codeForm.classList.remove('hidden');
+        codeInput.focus();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        errorMsg.textContent = data.error || 'Failed to send code.';
+      }
+    } catch {
+      errorMsg.textContent = 'Network error. Please try again.';
+    } finally {
+      emailSubmit.disabled = false;
+      emailSubmit.textContent = 'Send Code →';
+    }
+  });
+
+  codeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    codeSubmit.disabled = true;
+    codeSubmit.textContent = 'Verifying...';
+
+    try {
+      const res = await fetch('/api/team/auth/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: currentEmail, code: codeInput.value.trim() }),
+      });
+
+      if (res.ok) {
+        window.location.href = '/team';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        errorMsg.textContent = data.error || 'Invalid code.';
+      }
+    } catch {
+      errorMsg.textContent = 'Network error. Please try again.';
+    } finally {
+      codeSubmit.disabled = false;
+      codeSubmit.textContent = 'Verify →';
+    }
+  });
+</script>
+
+<style>
+  .login-section {
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+  .login-box {
+    max-width: 24rem;
+    width: 100%;
+    text-align: center;
+  }
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.5em;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin: 0 0 1.2em;
+  }
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .hidden { display: none; }
+  .code-sent-msg {
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    margin-bottom: 0.3em;
+  }
+  input {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.8em 1em;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    border-radius: 2px;
+    text-align: center;
+  }
+  input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  button {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.8em 1em;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) {
+    background: var(--gold-deep);
+  }
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .error-msg {
+    color: var(--stamp-red);
+    font-size: 0.9rem;
+    margin-top: 1em;
+    min-height: 1.2em;
+  }
+</style>

@@ -1,13 +1,15 @@
 ---
 export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { isAuthenticated } from '../../lib/auth';
+import { isTeamAuthenticated, getTeamSessionEmail } from '../../lib/team-auth';
 import { getAllJobs } from '../../lib/team-db';
 import { TEAM_ROSTER, DEPARTMENTS } from '../../lib/team-roster';
 
-if (!isAuthenticated(Astro.cookies)) {
-  return Astro.redirect('/dashboard/login');
+if (!(await isTeamAuthenticated(Astro.cookies))) {
+  return Astro.redirect('/team/login');
 }
+
+const sessionEmail = await getTeamSessionEmail(Astro.cookies);
 
 const jobs = await getAllJobs();
 
@@ -35,7 +37,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   <section class="team-section">
     <div class="team-header">
       <div>
-        <p class="eyebrow">Sam Ghanem, CMO</p>
+        <p class="eyebrow">Sam Ghanem, CMO &middot; {sessionEmail}</p>
         <h1>The Floor</h1>
       </div>
       <div class="tabs">
