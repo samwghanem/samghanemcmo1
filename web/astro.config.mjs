@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import vercel from '@astrojs/vercel';
 
-const NOINDEX_PATHS = ['/privacy-policy', '/dashboard'];
+const NOINDEX_PATHS = ['/privacy-policy', '/dashboard', '/team'];
 
 // https://astro.build/config
 export default defineConfig({

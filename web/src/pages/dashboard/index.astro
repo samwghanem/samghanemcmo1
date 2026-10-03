@@ -40,7 +40,10 @@ const REVENUE_LABELS: Record<string, string> = {
         <p class="eyebrow">Fractional CMO</p>
         <h1>Applicant Pipeline</h1>
       </div>
-      <p class="count">{leads.length} total applicant{leads.length === 1 ? '' : 's'}</p>
+      <div>
+        <p class="count">{leads.length} total applicant{leads.length === 1 ? '' : 's'}</p>
+        <a href="/team" class="team-link">The Floor (AI Team) &rarr;</a>
+      </div>
     </div>
 
     <div class="board">
@@ -153,6 +156,14 @@ const REVENUE_LABELS: Record<string, string> = {
     color: var(--ink-soft);
     font-size: 0.9rem;
     font-family: var(--font-label);
+  }
+  .team-link {
+    display: inline-block;
+    margin-top: 0.3em;
+    font-family: var(--font-label);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--gold-deep);
   }
   .board {
     display: grid;

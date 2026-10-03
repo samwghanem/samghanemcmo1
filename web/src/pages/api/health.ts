@@ -11,6 +11,7 @@ export const GET: APIRoute = async () => {
     NOTIFY_EMAIL_USER: Boolean(process.env.NOTIFY_EMAIL_USER),
     NOTIFY_EMAIL_APP_PASSWORD: Boolean(process.env.NOTIFY_EMAIL_APP_PASSWORD),
     POSTGRES_DATABASE_URL: Boolean(process.env.POSTGRES_DATABASE_URL),
+    ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
   };
 
   return new Response(JSON.stringify(status, null, 2), {

@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /dashboard
+Disallow: /team
 Disallow: /api
 
 Sitemap: https://www.samghanemcmo.com/sitemap-index.xml

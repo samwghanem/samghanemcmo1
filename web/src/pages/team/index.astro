@@ -1,0 +1,478 @@
+---
+export const prerender = false;
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isAuthenticated } from '../../lib/auth';
+import { getAllJobs } from '../../lib/team-db';
+import { TEAM_ROSTER, DEPARTMENTS } from '../../lib/team-roster';
+
+if (!isAuthenticated(Astro.cookies)) {
+  return Astro.redirect('/dashboard/login');
+}
+
+const jobs = await getAllJobs();
+
+const oneWeekAgo = new Date();
+oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+function countsFor(roleKey: string) {
+  const roleJobs = jobs.filter((j) => j.role_key === roleKey);
+  const open = roleJobs.filter((j) => j.status === 'running').length;
+  const waiting = roleJobs.filter((j) => j.status === 'waiting_on_sam').length;
+  const thisWeek = roleJobs.filter((j) => new Date(j.created_at) >= oneWeekAgo).length;
+  return { open, waiting, thisWeek };
+}
+
+const needsYouJobs = jobs.filter((j) => j.status === 'waiting_on_sam');
+const errorJobs = jobs.filter((j) => j.status === 'error');
+---
+
+<BaseLayout
+  title="The Floor | Sam Ghanem, CMO"
+  description="Private AI creative team dashboard."
+  canonicalPath="/team"
+  noindex={true}
+>
+  <section class="team-section">
+    <div class="team-header">
+      <div>
+        <p class="eyebrow">Sam Ghanem, CMO</p>
+        <h1>The Floor</h1>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="floor">The Floor</button>
+        <button class="tab-btn" data-tab="needs-you">
+          Needs You {needsYouJobs.length > 0 && <span class="badge">{needsYouJobs.length}</span>}
+        </button>
+        <button class="tab-btn" data-tab="submit">Submit a Job</button>
+      </div>
+    </div>
+
+    {errorJobs.length > 0 && (
+      <div class="alert-strip">
+        {errorJobs.length} job{errorJobs.length === 1 ? '' : 's'} failed to run - check Needs You for details.
+      </div>
+    )}
+
+    <!-- THE FLOOR TAB -->
+    <div class="tab-panel" id="panel-floor">
+      {DEPARTMENTS.map((dept) => (
+        <div class="dept-block">
+          <p class="dept-label">{dept.toUpperCase()}</p>
+          <div class="roster-grid">
+            {TEAM_ROSTER.filter((m) => m.department === dept).map((member) => {
+              const c = countsFor(member.key);
+              return (
+                <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''}`}>
+                  <div class="member-top">
+                    <span class="status-dot"></span>
+                    <strong>{member.name}</strong>
+                  </div>
+                  <p class="member-role">{member.role}</p>
+                  <div class="member-stats">
+                    <div><strong>{c.open}</strong><span>Open</span></div>
+                    <div><strong>{c.waiting}</strong><span>Waiting on you</span></div>
+                    <div><strong>{c.thisWeek}</strong><span>This week</span></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- NEEDS YOU TAB -->
+    <div class="tab-panel hidden" id="panel-needs-you">
+      <p class="panel-intro">{needsYouJobs.length} thing{needsYouJobs.length === 1 ? '' : 's'} waiting on your review.</p>
+      <div class="job-list">
+        {needsYouJobs.length === 0 && <p class="empty-note">Nothing waiting right now.</p>}
+        {needsYouJobs.map((job) => {
+          const member = TEAM_ROSTER.find((m) => m.key === job.role_key);
+          return (
+            <div class="job-card" data-job-id={job.id}>
+              <div class="job-card-head">
+                <strong>{member?.name ?? job.role_key}</strong>
+                <span class="job-meta">{member?.role} &middot; {job.department}</span>
+              </div>
+              <p class="job-request"><strong>Request:</strong> {job.request}</p>
+              <div class="job-result">{job.result}</div>
+              <div class="job-actions">
+                <button class="approve-btn" data-id={job.id}>Approve</button>
+                <button class="reject-btn" data-id={job.id}>Reject</button>
+              </div>
+            </div>
+          );
+        })}
+        {errorJobs.map((job) => {
+          const member = TEAM_ROSTER.find((m) => m.key === job.role_key);
+          return (
+            <div class="job-card error-card" data-job-id={job.id}>
+              <div class="job-card-head">
+                <strong>{member?.name ?? job.role_key}</strong>
+                <span class="job-meta">Failed to run</span>
+              </div>
+              <p class="job-request"><strong>Request:</strong> {job.request}</p>
+              <div class="job-result error-text">{job.error_message}</div>
+              <div class="job-actions">
+                <button class="reject-btn" data-id={job.id}>Dismiss</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    <!-- SUBMIT TAB -->
+    <div class="tab-panel hidden" id="panel-submit">
+      <p class="panel-intro">Pick who should handle this, describe what you need, and send it to work.</p>
+      <form id="submit-form">
+        <label>
+          Who should take this?
+          <select name="roleKey" id="role-select" required>
+            <option value="">Select a team member</option>
+            {DEPARTMENTS.map((dept) => (
+              <optgroup label={dept}>
+                {TEAM_ROSTER.filter((m) => m.department === dept).map((m) => (
+                  <option value={m.key}>{m.name} - {m.role}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+        <label>
+          What do you need?
+          <textarea name="request" id="request-input" rows="5" placeholder="e.g. I need five headline options for a LinkedIn post about the gap between messaging and delivery." required></textarea>
+        </label>
+        <button type="submit" id="submit-btn">Send to Work &rarr;</button>
+        <p id="submit-status" class="submit-status"></p>
+      </form>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const panels: Record<string, HTMLElement> = {
+    floor: document.getElementById('panel-floor')!,
+    'needs-you': document.getElementById('panel-needs-you')!,
+    submit: document.getElementById('panel-submit')!,
+  };
+
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = (btn as HTMLElement).dataset.tab!;
+      tabButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.entries(panels).forEach(([key, el]) => {
+        el.classList.toggle('hidden', key !== tab);
+      });
+    });
+  });
+
+  const form = document.getElementById('submit-form') as HTMLFormElement;
+  const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+  const statusMsg = document.getElementById('submit-status') as HTMLParagraphElement;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Working on it...';
+    statusMsg.textContent = '';
+    statusMsg.className = 'submit-status';
+
+    const formData = new FormData(form);
+    const payload = {
+      roleKey: formData.get('roleKey'),
+      request: formData.get('request'),
+    };
+
+    try {
+      const res = await fetch('/api/team/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        statusMsg.textContent = 'Done. Check Needs You to review the result.';
+        statusMsg.className = 'submit-status success';
+        form.reset();
+        setTimeout(() => window.location.reload(), 1200);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        statusMsg.textContent = data.error || 'Something went wrong.';
+        statusMsg.className = 'submit-status error';
+      }
+    } catch {
+      statusMsg.textContent = 'Network error. Please try again.';
+      statusMsg.className = 'submit-status error';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Send to Work →';
+    }
+  });
+
+  document.querySelectorAll('.approve-btn, .reject-btn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const target = e.target as HTMLButtonElement;
+      const id = target.dataset.id;
+      const decision = target.classList.contains('approve-btn') ? 'approved' : 'rejected';
+
+      const res = await fetch(`/api/team/jobs/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ decision }),
+      });
+
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to update. Please try again.');
+      }
+    });
+  });
+</script>
+
+<style>
+  .team-section {
+    padding: 2rem clamp(1rem, 4vw, 2.5rem);
+    max-width: 90rem;
+    margin: 0 auto;
+  }
+  .team-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin: 0;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    color: var(--ink);
+    margin: 0.1em 0 0;
+  }
+  .tabs {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .tab-btn {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.6em 1.1em;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .tab-btn.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .badge {
+    background: var(--gold);
+    color: var(--paper);
+    border-radius: 999px;
+    padding: 0.1em 0.5em;
+    font-size: 0.75rem;
+    margin-left: 0.3em;
+  }
+  .alert-strip {
+    background: rgba(184, 75, 34, 0.1);
+    border: 1px solid var(--stamp-red);
+    color: var(--stamp-red);
+    padding: 0.8em 1.2em;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .hidden { display: none; }
+  .dept-block { margin-bottom: 2rem; }
+  .dept-label {
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin-bottom: 0.6em;
+  }
+  .roster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 0.8rem;
+  }
+  .member-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.9em 1em;
+  }
+  .member-card.needs-attention {
+    border-color: var(--gold);
+  }
+  .member-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-label);
+    font-size: 1rem;
+  }
+  .status-dot {
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 50%;
+    background: #3a8a5c;
+    display: inline-block;
+  }
+  .member-role {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin: 0.2em 0 0.7em;
+  }
+  .member-stats {
+    display: flex;
+    gap: 0.9rem;
+  }
+  .member-stats div {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+  }
+  .member-stats strong {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .panel-intro {
+    color: var(--ink-soft);
+    margin-bottom: 1.2rem;
+  }
+  .job-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .job-card {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1.1em 1.3em;
+  }
+  .job-card.error-card {
+    border-color: var(--stamp-red);
+  }
+  .job-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.6em;
+  }
+  .job-meta {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .job-request {
+    font-size: 0.9rem;
+    margin-bottom: 0.8em;
+  }
+  .job-result {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 1em;
+    white-space: pre-wrap;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    max-height: 24rem;
+    overflow-y: auto;
+    margin-bottom: 1em;
+  }
+  .job-result.error-text {
+    color: var(--stamp-red);
+  }
+  .job-actions {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .approve-btn, .reject-btn {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 0.5em 1em;
+    border-radius: 2px;
+    cursor: pointer;
+    border: none;
+  }
+  .approve-btn {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .reject-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+  }
+  .empty-note {
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  #submit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    max-width: 36rem;
+  }
+  #submit-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4em;
+    font-family: var(--font-label);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  #submit-form select,
+  #submit-form textarea {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 400;
+    padding: 0.7em 0.9em;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    border-radius: 2px;
+    color: var(--ink);
+  }
+  #submit-btn {
+    font-family: var(--font-label);
+    font-weight: 600;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 0.85em 1.5em;
+    border-radius: 2px;
+    cursor: pointer;
+    width: fit-content;
+  }
+  #submit-btn:hover:not(:disabled) {
+    background: var(--gold-deep);
+  }
+  #submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .submit-status.success { color: var(--gold-deep); font-weight: 600; }
+  .submit-status.error { color: var(--stamp-red); font-weight: 600; }
+</style>
