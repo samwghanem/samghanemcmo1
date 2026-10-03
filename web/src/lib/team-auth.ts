@@ -30,6 +30,50 @@ export async function ensureAuthSchema() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
   `;
+  await sql`
+    CREATE TABLE IF NOT EXISTS team_share_links (
+      token TEXT PRIMARY KEY,
+      label TEXT,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `;
+}
+
+// Creates a temporary, time-limited guest link that bypasses the email+code
+// flow entirely. Meant for showing the dashboard to someone outside the
+// domain (like Ken) without creating a standing exception to the real rule.
+export async function createShareLink(label: string, hoursValid: number): Promise<string> {
+  await ensureAuthSchema();
+  const token = randomBytes(24).toString('hex');
+  const expiresAt = new Date(Date.now() + hoursValid * 60 * 60 * 1000);
+  await sql`
+    INSERT INTO team_share_links (token, label, expires_at)
+    VALUES (${token}, ${label}, ${expiresAt.toISOString()});
+  `;
+  return token;
+}
+
+export async function redeemShareLink(token: string): Promise<string | null> {
+  await ensureAuthSchema();
+  const result = await sql`
+    SELECT * FROM team_share_links WHERE token = ${token} AND expires_at > now();
+  `;
+  if (result.rows.length === 0) return null;
+  return result.rows[0].label ?? 'Guest';
+}
+
+export async function createGuestSession(label: string): Promise<string> {
+  await ensureAuthSchema();
+  const token = randomBytes(32).toString('hex');
+  // Guest sessions are shorter-lived than real logins - 48 hours, matching
+  // the share link's own window, not the standard 14-day session length.
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+  await sql`
+    INSERT INTO team_sessions (token, email, expires_at)
+    VALUES (${token}, ${`guest: ${label}`}, ${expiresAt.toISOString()});
+  `;
+  return token;
 }
 
 export function isAllowedEmail(email: string): boolean {

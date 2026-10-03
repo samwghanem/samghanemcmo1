@@ -46,6 +46,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
           Needs You {needsYouJobs.length > 0 && <span class="badge">{needsYouJobs.length}</span>}
         </button>
         <button class="tab-btn" data-tab="submit">Submit a Job</button>
+        <button class="tab-btn share-btn" id="share-btn" type="button">Create Guest Link</button>
       </div>
     </div>
 
@@ -214,6 +215,32 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     }
   });
 
+  const shareBtn = document.getElementById('share-btn') as HTMLButtonElement;
+  shareBtn.addEventListener('click', async () => {
+    const label = prompt('Who is this link for? (e.g. "Ken")') || 'Guest';
+    shareBtn.disabled = true;
+    shareBtn.textContent = 'Creating...';
+
+    try {
+      const res = await fetch('/api/team/share-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        prompt('Share this link (valid for 48 hours). Copy it below:', data.url);
+      } else {
+        alert(data.error || 'Failed to create link.');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    } finally {
+      shareBtn.disabled = false;
+      shareBtn.textContent = 'Create Guest Link';
+    }
+  });
+
   document.querySelectorAll('.approve-btn, .reject-btn').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
       const target = e.target as HTMLButtonElement;
@@ -283,6 +310,9 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     background: var(--ink);
     color: var(--paper);
     border-color: var(--ink);
+  }
+  .share-btn {
+    border-style: dashed;
   }
   .badge {
     background: var(--gold);

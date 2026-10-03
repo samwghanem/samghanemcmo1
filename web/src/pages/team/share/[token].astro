@@ -1,0 +1,59 @@
+---
+export const prerender = false;
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { redeemShareLink, createGuestSession, setTeamSessionCookie } from '../../../lib/team-auth';
+
+const { token } = Astro.params;
+
+if (token) {
+  const label = await redeemShareLink(token);
+  if (label) {
+    const sessionToken = await createGuestSession(label);
+    setTeamSessionCookie(Astro.cookies, sessionToken);
+    return Astro.redirect('/team');
+  }
+}
+---
+
+<BaseLayout
+  title="Link Expired | Sam Ghanem, CMO"
+  description="This share link has expired or is invalid."
+  canonicalPath="/team/share"
+  noindex={true}
+>
+  <section class="expired-section">
+    <p class="eyebrow">The Floor</p>
+    <h1>This Link Has Expired</h1>
+    <p>Ask Sam for a new one.</p>
+  </section>
+</BaseLayout>
+
+<style>
+  .expired-section {
+    min-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+  }
+  .eyebrow {
+    font-family: var(--font-label);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 600;
+    margin-bottom: 0.5em;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin: 0 0 0.4em;
+  }
+  p {
+    color: var(--ink-soft);
+  }
+</style>
