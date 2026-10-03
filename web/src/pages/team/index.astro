@@ -3,7 +3,7 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isTeamAuthenticated, getTeamSessionEmail } from '../../lib/team-auth';
 import { getAllJobs } from '../../lib/team-db';
-import { TEAM_ROSTER, DEPARTMENTS, avatarUrl } from '../../lib/team-roster';
+import { TEAM_ROSTER, DEPARTMENTS } from '../../lib/team-roster';
 
 if (!(await isTeamAuthenticated(Astro.cookies))) {
   return Astro.redirect('/team/login');
@@ -22,6 +22,16 @@ function countsFor(roleKey: string) {
   const waiting = roleJobs.filter((j) => j.status === 'waiting_on_sam').length;
   const thisWeek = roleJobs.filter((j) => new Date(j.created_at) >= oneWeekAgo).length;
   return { open, waiting, thisWeek };
+}
+
+// Level is grounded in real history, not a decorative number: one level
+// per 5 jobs Sam has actually approved for that role, capped at the
+// role's own ceiling. Everyone starts at Level 1.
+const JOBS_PER_LEVEL = 5;
+function levelFor(roleKey: string, maxLevel: number) {
+  const approvedCount = jobs.filter((j) => j.role_key === roleKey && j.status === 'approved').length;
+  const earned = 1 + Math.floor(approvedCount / JOBS_PER_LEVEL);
+  return Math.min(earned, maxLevel);
 }
 
 const needsYouJobs = jobs.filter((j) => j.status === 'waiting_on_sam');
@@ -64,18 +74,15 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
           <div class="roster-grid">
             {TEAM_ROSTER.filter((m) => m.department === dept).map((member) => {
               const c = countsFor(member.key);
+              const level = levelFor(member.key, member.maxLevel);
               return (
                 <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''}`}>
-                  <div class="member-top">
-                    <img class="member-avatar" src={avatarUrl(member.key)} alt={member.name} width="40" height="40" loading="lazy" />
-                    <div>
-                      <div class="name-row">
-                        <span class="status-dot"></span>
-                        <strong>{member.name}</strong>
-                      </div>
-                      <p class="member-role">{member.role}</p>
-                    </div>
+                  <div class="name-row">
+                    <span class="status-dot"></span>
+                    <strong>{member.name}</strong>
+                    <span class="level-chip">Level {level} of {member.maxLevel}</span>
                   </div>
+                  <p class="member-role">{member.role}</p>
                   <div class="member-stats">
                     <div><strong>{c.open}</strong><span>Open</span></div>
                     <div><strong>{c.waiting}</strong><span>Waiting on you</span></div>
@@ -359,20 +366,6 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   .member-card.needs-attention {
     border-color: var(--gold);
   }
-  .member-top {
-    display: flex;
-    align-items: center;
-    gap: 0.7em;
-    margin-bottom: 0.7em;
-  }
-  .member-avatar {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    flex-shrink: 0;
-    background: var(--paper);
-  }
   .name-row {
     display: flex;
     align-items: center;
@@ -386,6 +379,16 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     border-radius: 50%;
     background: #3a8a5c;
     display: inline-block;
+  }
+  .level-chip {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.15em 0.6em;
+    margin-left: auto;
   }
   .member-role {
     font-size: 0.78rem;
