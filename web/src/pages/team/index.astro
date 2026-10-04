@@ -2,7 +2,7 @@
 export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isTeamAuthenticated, getTeamSessionEmail } from '../../lib/team-auth';
-import { getAllJobs } from '../../lib/team-db';
+import { getAllJobs, failStaleJobs, type TeamJob } from '../../lib/team-db';
 import { TEAM_ROSTER, DEPARTMENTS, photoUrl } from '../../lib/team-roster';
 
 if (!(await isTeamAuthenticated(Astro.cookies))) {
@@ -10,7 +10,11 @@ if (!(await isTeamAuthenticated(Astro.cookies))) {
 }
 
 const sessionEmail = await getTeamSessionEmail(Astro.cookies);
+const isGuest = (sessionEmail ?? '').startsWith('guest:');
 
+// A job that was cut off (for example a server timeout) is marked failed
+// instead of sitting in "Being made" forever.
+await failStaleJobs();
 const jobs = await getAllJobs();
 
 const oneWeekAgo = new Date();
@@ -19,23 +23,35 @@ oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 function countsFor(roleKey: string) {
   const roleJobs = jobs.filter((j) => j.role_key === roleKey);
   const open = roleJobs.filter((j) => j.status === 'running').length;
-  const waiting = roleJobs.filter((j) => j.status === 'waiting_on_sam').length;
+  // "Waiting on you" is anything that failed and needs a retry.
+  const waiting = roleJobs.filter((j) => j.status === 'error').length;
   const thisWeek = roleJobs.filter((j) => new Date(j.created_at) >= oneWeekAgo).length;
   return { open, waiting, thisWeek };
 }
 
-// Level is grounded in real history, not a decorative number: one level
-// per 5 jobs Sam has actually approved for that role, capped at the
-// role's own ceiling. Everyone starts at Level 1.
+// Level is grounded in real history, not a decorative number: one level per
+// 5 finished jobs for that role, capped at the role's own ceiling.
+// Everyone starts at Level 1.
 const JOBS_PER_LEVEL = 5;
 function levelFor(roleKey: string, maxLevel: number) {
-  const approvedCount = jobs.filter((j) => j.role_key === roleKey && j.status === 'approved').length;
-  const earned = 1 + Math.floor(approvedCount / JOBS_PER_LEVEL);
+  const doneCount = jobs.filter((j) => j.role_key === roleKey && j.status === 'done').length;
+  const earned = 1 + Math.floor(doneCount / JOBS_PER_LEVEL);
   return Math.min(earned, maxLevel);
 }
 
-const needsYouJobs = jobs.filter((j) => j.status === 'waiting_on_sam');
+const runningJobs = jobs.filter((j) => j.status === 'running');
+const doneJobs = jobs.filter((j) => j.status === 'done');
 const errorJobs = jobs.filter((j) => j.status === 'error');
+
+const memberFor = (key: string) => TEAM_ROSTER.find((m) => m.key === key);
+const fmt = (d: string | Date) =>
+  new Date(d).toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 ---
 
 <BaseLayout
@@ -44,7 +60,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   canonicalPath="/team"
   noindex={true}
 >
-  <section class="team-section">
+  <section class="team-section" data-running={runningJobs.length}>
     <div class="team-header">
       <div>
         <p class="eyebrow">Sam Ghanem, CMO &middot; {sessionEmail}</p>
@@ -52,17 +68,20 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
       </div>
       <div class="tabs">
         <button class="tab-btn active" data-tab="floor">The Floor</button>
+        <button class="tab-btn" data-tab="jobs">
+          Jobs {runningJobs.length > 0 && <span class="badge badge-blue">{runningJobs.length}</span>}
+        </button>
         <button class="tab-btn" data-tab="needs-you">
-          Needs You {needsYouJobs.length > 0 && <span class="badge">{needsYouJobs.length}</span>}
+          Needs You {errorJobs.length > 0 && <span class="badge">{errorJobs.length}</span>}
         </button>
         <button class="tab-btn" data-tab="submit">Submit a Job</button>
-        <button class="tab-btn share-btn" id="share-btn" type="button">Create Guest Link</button>
+        {!isGuest && <button class="tab-btn share-btn" id="share-btn" type="button">Create Guest Link</button>}
       </div>
     </div>
 
     {errorJobs.length > 0 && (
       <div class="alert-strip">
-        {errorJobs.length} job{errorJobs.length === 1 ? '' : 's'} failed to run - check Needs You for details.
+        {errorJobs.length} job{errorJobs.length === 1 ? '' : 's'} failed to run - open Needs You to retry.
       </div>
     )}
 
@@ -76,7 +95,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
               const c = countsFor(member.key);
               const level = levelFor(member.key, member.maxLevel);
               return (
-                <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''}`}>
+                <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''} ${c.open > 0 ? 'is-working' : ''}`}>
                   <div class="member-top">
                     <img class="member-photo" src={photoUrl(member.name)} alt={member.name} width="56" height="56" loading="lazy" />
                     <div class="member-id">
@@ -101,40 +120,67 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
       ))}
     </div>
 
-    <!-- NEEDS YOU TAB -->
+    <!-- JOBS TAB: what is being made, and what is done -->
+    <div class="tab-panel hidden" id="panel-jobs">
+      <p class="panel-intro">Every job, from the moment you send it. <span class="checked-chip" id="checked-chip">Checked just now</span></p>
+      <div class="board">
+        <div class="board-col">
+          <div class="board-head"><span class="col-dot dot-blue"></span><strong>Being made</strong><span class="col-count">{runningJobs.length}</span></div>
+          {runningJobs.length === 0 && <p class="empty-note">Nothing in progress.</p>}
+          {runningJobs.map((job) => {
+            const m = memberFor(job.role_key);
+            return (
+              <div class="job-card running-card">
+                <span class="status-chip chip-blue"><span class="pulse"></span>working</span>
+                <p class="job-who">{m?.name} <span>&middot; {m?.role}</span></p>
+                <p class="job-when">Started {fmt(job.created_at)}</p>
+                <p class="job-request">{job.request}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        <div class="board-col">
+          <div class="board-head"><span class="col-dot dot-green"></span><strong>Done</strong><span class="col-count">{doneJobs.length}</span></div>
+          {doneJobs.length === 0 && <p class="empty-note">Finished jobs will show up here.</p>}
+          {doneJobs.map((job) => {
+            const m = memberFor(job.role_key);
+            return (
+              <div class="job-card done-card" data-job-id={job.id}>
+                <span class="status-chip chip-green">done</span>
+                <p class="job-who">{m?.name} <span>&middot; {m?.role}</span></p>
+                <p class="job-when">Finished {job.completed_at ? fmt(job.completed_at) : ''}</p>
+                <p class="job-request">{job.request}</p>
+                <details class="job-details">
+                  <summary>Open</summary>
+                  <div class="job-result">{job.result}</div>
+                  <div class="job-actions">
+                    <button class="copy-btn" type="button">Copy</button>
+                    <button class="delete-job-btn" type="button" data-id={job.id}>Delete</button>
+                  </div>
+                </details>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+
+    <!-- NEEDS YOU TAB: only things that failed and need a retry -->
     <div class="tab-panel hidden" id="panel-needs-you">
-      <p class="panel-intro">{needsYouJobs.length} thing{needsYouJobs.length === 1 ? '' : 's'} waiting on your review.</p>
+      <p class="panel-intro">{errorJobs.length === 0 ? 'Nothing needs you right now.' : `${errorJobs.length} job${errorJobs.length === 1 ? '' : 's'} didn't finish.`}</p>
       <div class="job-list">
-        {needsYouJobs.length === 0 && <p class="empty-note">Nothing waiting right now.</p>}
-        {needsYouJobs.map((job) => {
-          const member = TEAM_ROSTER.find((m) => m.key === job.role_key);
-          return (
-            <div class="job-card" data-job-id={job.id}>
-              <div class="job-card-head">
-                <strong>{member?.name ?? job.role_key}</strong>
-                <span class="job-meta">{member?.role} &middot; {job.department}</span>
-              </div>
-              <p class="job-request"><strong>Request:</strong> {job.request}</p>
-              <div class="job-result">{job.result}</div>
-              <div class="job-actions">
-                <button class="approve-btn" data-id={job.id}>Approve</button>
-                <button class="reject-btn" data-id={job.id}>Reject</button>
-              </div>
-            </div>
-          );
-        })}
         {errorJobs.map((job) => {
-          const member = TEAM_ROSTER.find((m) => m.key === job.role_key);
+          const m = memberFor(job.role_key);
           return (
             <div class="job-card error-card" data-job-id={job.id}>
-              <div class="job-card-head">
-                <strong>{member?.name ?? job.role_key}</strong>
-                <span class="job-meta">Failed to run</span>
-              </div>
+              <span class="status-chip chip-red">failed</span>
+              <p class="job-who">{m?.name} <span>&middot; {m?.role}</span></p>
               <p class="job-request"><strong>Request:</strong> {job.request}</p>
               <div class="job-result error-text">{job.error_message}</div>
               <div class="job-actions">
-                <button class="reject-btn" data-id={job.id}>Dismiss</button>
+                <button class="retry-btn" type="button" data-id={job.id}>Retry</button>
+                <button class="delete-job-btn" type="button" data-id={job.id}>Dismiss</button>
               </div>
             </div>
           );
@@ -144,7 +190,7 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
 
     <!-- SUBMIT TAB -->
     <div class="tab-panel hidden" id="panel-submit">
-      <p class="panel-intro">Pick who should handle this, describe what you need, and send it to work.</p>
+      <p class="panel-intro">Pick who should handle this, describe what you need, and send it to work. It will appear under Jobs right away.</p>
       <form id="submit-form">
         <label>
           Who should take this?
@@ -171,24 +217,25 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
 </BaseLayout>
 
 <script>
-  const tabButtons = document.querySelectorAll('.tab-btn');
+  // ---- tabs (remembered in the URL so a refresh keeps you where you were) ----
+  const tabButtons = document.querySelectorAll<HTMLButtonElement>('.tab-btn[data-tab]');
   const panels: Record<string, HTMLElement> = {
     floor: document.getElementById('panel-floor')!,
+    jobs: document.getElementById('panel-jobs')!,
     'needs-you': document.getElementById('panel-needs-you')!,
     submit: document.getElementById('panel-submit')!,
   };
 
-  tabButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const tab = (btn as HTMLElement).dataset.tab!;
-      tabButtons.forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      Object.entries(panels).forEach(([key, el]) => {
-        el.classList.toggle('hidden', key !== tab);
-      });
-    });
-  });
+  function showTab(tab: string) {
+    if (!panels[tab]) tab = 'floor';
+    tabButtons.forEach((b) => b.classList.toggle('active', b.dataset.tab === tab));
+    Object.entries(panels).forEach(([key, el]) => el.classList.toggle('hidden', key !== tab));
+    history.replaceState(null, '', tab === 'floor' ? location.pathname : `#${tab}`);
+  }
+  tabButtons.forEach((btn) => btn.addEventListener('click', () => showTab(btn.dataset.tab!)));
+  showTab(location.hash.replace('#', '') || 'floor');
 
+  // ---- submit a job: it starts in the background, then jump to the Jobs board ----
   const form = document.getElementById('submit-form') as HTMLFormElement;
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
   const statusMsg = document.getElementById('submit-status') as HTMLParagraphElement;
@@ -196,28 +243,21 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Working on it...';
+    submitBtn.textContent = 'Sending...';
     statusMsg.textContent = '';
     statusMsg.className = 'submit-status';
 
     const formData = new FormData(form);
-    const payload = {
-      roleKey: formData.get('roleKey'),
-      request: formData.get('request'),
-    };
-
     try {
       const res = await fetch('/api/team/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ roleKey: formData.get('roleKey'), request: formData.get('request') }),
       });
-
       if (res.ok) {
-        statusMsg.textContent = 'Done. Check Needs You to review the result.';
-        statusMsg.className = 'submit-status success';
         form.reset();
-        setTimeout(() => window.location.reload(), 1200);
+        location.hash = '#jobs';
+        location.reload();
       } else {
         const data = await res.json().catch(() => ({}));
         statusMsg.textContent = data.error || 'Something went wrong.';
@@ -232,12 +272,42 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     }
   });
 
-  const shareBtn = document.getElementById('share-btn') as HTMLButtonElement;
-  shareBtn.addEventListener('click', async () => {
+  // ---- live updates: while anything is being made, check every 4 seconds ----
+  const section = document.querySelector('.team-section') as HTMLElement;
+  const startingRunning = Number(section.dataset.running || 0);
+  const checkedChip = document.getElementById('checked-chip');
+
+  function stamp() {
+    if (checkedChip) {
+      const t = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      checkedChip.textContent = `Checked ${t}${startingRunning > 0 ? ' · refreshes automatically' : ''}`;
+    }
+  }
+  stamp();
+
+  if (startingRunning > 0) {
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch('/api/team/status', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        stamp();
+        if (data.running < startingRunning) {
+          clearInterval(poll);
+          location.reload(); // something finished - show it
+        }
+      } catch {
+        /* try again on the next tick */
+      }
+    }, 4000);
+  }
+
+  // ---- guest link ----
+  const shareBtn = document.getElementById('share-btn') as HTMLButtonElement | null;
+  shareBtn?.addEventListener('click', async () => {
     const label = prompt('Who is this link for? (e.g. "Ken")') || 'Guest';
     shareBtn.disabled = true;
     shareBtn.textContent = 'Creating...';
-
     try {
       const res = await fetch('/api/team/share-link', {
         method: 'POST',
@@ -258,22 +328,42 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     }
   });
 
-  document.querySelectorAll('.approve-btn, .reject-btn').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      const target = e.target as HTMLButtonElement;
-      const id = target.dataset.id;
-      const decision = target.classList.contains('approve-btn') ? 'approved' : 'rejected';
-
-      const res = await fetch(`/api/team/jobs/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ decision }),
-      });
-
+  // ---- retry / delete / copy ----
+  document.querySelectorAll<HTMLButtonElement>('.retry-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Retrying...';
+      const res = await fetch(`/api/team/jobs/${btn.dataset.id}`, { method: 'POST' });
       if (res.ok) {
-        window.location.reload();
+        location.hash = '#jobs';
+        location.reload();
       } else {
-        alert('Failed to update. Please try again.');
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Could not retry. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Retry';
+      }
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.delete-job-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('Delete this job? This cannot be undone.')) return;
+      const res = await fetch(`/api/team/jobs/${btn.dataset.id}`, { method: 'DELETE' });
+      if (res.ok) location.reload();
+      else alert('Could not delete. Please try again.');
+    });
+  });
+
+  document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const text = btn.closest('.job-details')?.querySelector('.job-result')?.textContent ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+        setTimeout(() => (btn.textContent = 'Copy'), 1500);
+      } catch {
+        alert('Could not copy automatically. Select the text and copy it.');
       }
     });
   });
@@ -485,24 +575,6 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     display: flex;
     gap: 0.6rem;
   }
-  .approve-btn, .reject-btn {
-    font-family: var(--font-label);
-    font-weight: 600;
-    font-size: 0.82rem;
-    padding: 0.5em 1em;
-    border-radius: 2px;
-    cursor: pointer;
-    border: none;
-  }
-  .approve-btn {
-    background: var(--ink);
-    color: var(--paper);
-  }
-  .reject-btn {
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--ink-soft);
-  }
   .empty-note {
     color: var(--ink-soft);
     font-style: italic;
@@ -553,4 +625,102 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
   }
   .submit-status.success { color: var(--gold-deep); font-weight: 600; }
   .submit-status.error { color: var(--stamp-red); font-weight: 600; }
+
+  .badge-blue { background: #2f6fb3; }
+  .member-card.is-working { border-color: #2f6fb3; }
+  .checked-chip {
+    display: inline-block;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.25em 0.8em;
+    margin-left: 0.5em;
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1.2rem;
+    align-items: start;
+  }
+  .board-col {
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .board-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-family: var(--font-label);
+    font-size: 0.95rem;
+  }
+  .col-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+  }
+  .col-dot { width: 0.7em; height: 0.7em; border-radius: 2px; display: inline-block; }
+  .dot-blue { background: #2f6fb3; }
+  .dot-green { background: #3a8a5c; }
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-family: var(--font-label);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0.2em 0.8em;
+    width: fit-content;
+  }
+  .chip-blue { background: rgba(47, 111, 179, 0.12); color: #2f6fb3; }
+  .chip-green { background: rgba(58, 138, 92, 0.14); color: #2d7048; }
+  .chip-red { background: rgba(184, 75, 34, 0.12); color: var(--stamp-red); }
+  .pulse {
+    width: 0.55em;
+    height: 0.55em;
+    border-radius: 50%;
+    background: #2f6fb3;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+  .job-card.running-card { border-left: 4px solid #2f6fb3; }
+  .job-card.done-card { border-left: 4px solid #3a8a5c; }
+  .job-who { font-weight: 600; margin: 0.5em 0 0.1em; }
+  .job-who span { font-weight: 400; color: var(--ink-soft); font-size: 0.85rem; }
+  .job-when { font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 0.6em; }
+  .job-details summary {
+    cursor: pointer;
+    display: inline-block;
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.82rem;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0.4em 0.9em;
+    background: var(--paper);
+    list-style: none;
+  }
+  .job-details summary::-webkit-details-marker { display: none; }
+  .job-details[open] summary { margin-bottom: 0.8em; }
+  .retry-btn, .copy-btn, .delete-job-btn {
+    font-family: var(--font-label);
+    font-weight: 600;
+    font-size: 0.82rem;
+    padding: 0.5em 1em;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .retry-btn { background: var(--ink); color: var(--paper); border: none; }
+  .copy-btn { background: var(--ink); color: var(--paper); border: none; }
+  .delete-job-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); }
+  .retry-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>

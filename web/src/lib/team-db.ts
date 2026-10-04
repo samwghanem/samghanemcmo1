@@ -1,6 +1,6 @@
 import { createPool } from '@vercel/postgres';
 
-export type JobStatus = 'running' | 'waiting_on_sam' | 'approved' | 'rejected' | 'error';
+export type JobStatus = 'running' | 'done' | 'error';
 
 export interface TeamJob {
   id: number;
@@ -31,6 +31,9 @@ export async function ensureTeamSchema() {
       completed_at TIMESTAMPTZ
     );
   `;
+  // Jobs used to wait for Sam's approval. They now finish as 'done', so fold
+  // any older review-era rows into that status.
+  await sql`UPDATE team_jobs SET status = 'done' WHERE status IN ('waiting_on_sam', 'approved', 'rejected');`;
 }
 
 export async function createJob(data: {
@@ -50,7 +53,7 @@ export async function createJob(data: {
 export async function completeJob(id: number, resultText: string): Promise<TeamJob | null> {
   const result = await sql<TeamJob>`
     UPDATE team_jobs
-    SET status = 'waiting_on_sam', result = ${resultText}, completed_at = now()
+    SET status = 'done', result = ${resultText}, error_message = NULL, completed_at = now()
     WHERE id = ${id}
     RETURNING *;
   `;
@@ -67,14 +70,32 @@ export async function failJob(id: number, errorMessage: string): Promise<TeamJob
   return result.rows[0] ?? null;
 }
 
-export async function setJobDecision(
-  id: number,
-  decision: 'approved' | 'rejected'
-): Promise<TeamJob | null> {
+// Puts a failed job back in the 'running' state so it can be run again.
+export async function restartJob(id: number): Promise<TeamJob | null> {
   const result = await sql<TeamJob>`
-    UPDATE team_jobs SET status = ${decision} WHERE id = ${id} RETURNING *;
+    UPDATE team_jobs
+    SET status = 'running', error_message = NULL, result = NULL, completed_at = NULL, created_at = now()
+    WHERE id = ${id}
+    RETURNING *;
   `;
   return result.rows[0] ?? null;
+}
+
+// A job that has been 'running' for 5+ minutes was cut off (for example the
+// server timed out). Mark it failed so it never sits in "Being made" forever.
+export async function failStaleJobs(): Promise<void> {
+  await sql`
+    UPDATE team_jobs
+    SET status = 'error',
+        error_message = 'This job timed out before it finished. Press Retry to run it again.',
+        completed_at = now()
+    WHERE status = 'running' AND created_at < now() - interval '5 minutes';
+  `;
+}
+
+export async function getRunningCount(): Promise<number> {
+  const result = await sql`SELECT COUNT(*)::int AS n FROM team_jobs WHERE status = 'running';`;
+  return result.rows[0]?.n ?? 0;
 }
 
 export async function getAllJobs(): Promise<TeamJob[]> {

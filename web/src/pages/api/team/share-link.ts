@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { isTeamAuthenticated, createShareLink } from '../../../lib/team-auth';
+import { isTeamAuthenticated, createShareLink, getTeamSessionEmail } from '../../../lib/team-auth';
 
 export const prerender = false;
 
@@ -7,6 +7,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   if (!(await isTeamAuthenticated(cookies))) {
     return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  // A guest session must not be able to create more guest links, or one
+  // 48-hour link could be chained into permanent access.
+  const sessionEmail = await getTeamSessionEmail(cookies);
+  if (!sessionEmail || sessionEmail.startsWith('guest:')) {
+    return new Response(JSON.stringify({ error: 'Only a signed-in team member can create guest links.' }), {
+      status: 403,
       headers: { 'Content-Type': 'application/json' },
     });
   }

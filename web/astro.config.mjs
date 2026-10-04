@@ -9,7 +9,7 @@ const NOINDEX_PATHS = ['/privacy-policy', '/dashboard', '/team'];
 export default defineConfig({
   site: 'https://www.samghanemcmo.com',
   output: 'server',
-  adapter: vercel(),
+  adapter: vercel({ maxDuration: 60 }),
   integrations: [
     sitemap({
       filter: (page) => !NOINDEX_PATHS.some((p) => page.includes(p)),

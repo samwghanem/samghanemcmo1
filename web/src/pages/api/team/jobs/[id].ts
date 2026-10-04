@@ -1,83 +1,38 @@
 import type { APIRoute } from 'astro';
 import { isTeamAuthenticated } from '../../../../lib/team-auth';
-import { setJobDecision, deleteJob } from '../../../../lib/team-db';
+import { deleteJob, getJobById, restartJob } from '../../../../lib/team-db';
+import { startJob } from '../../../../lib/team-runner';
 
 export const prerender = false;
 
-export const PATCH: APIRoute = async ({ params, request, cookies }) => {
-  if (!(await isTeamAuthenticated(cookies))) {
-    return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+
+// Retry a failed job: put it back in "Being made" and run it again.
+export const POST: APIRoute = async ({ params, cookies }) => {
+  if (!(await isTeamAuthenticated(cookies))) return json({ error: 'Not authenticated.' }, 401);
 
   const id = Number(params.id);
-  if (!Number.isInteger(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid job id.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  if (!Number.isInteger(id)) return json({ error: 'Invalid job id.' }, 400);
 
-  let body: Record<string, unknown>;
-  try {
-    body = await request.json();
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid request body.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  const existing = await getJobById(id);
+  if (!existing) return json({ error: 'Job not found.' }, 404);
+  if (existing.status !== 'error') return json({ error: 'Only failed jobs can be retried.' }, 400);
 
-  const decision = String(body.decision ?? '');
-  if (decision !== 'approved' && decision !== 'rejected') {
-    return new Response(JSON.stringify({ error: 'Decision must be "approved" or "rejected".' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  const job = await restartJob(id);
+  if (!job) return json({ error: 'Job not found.' }, 404);
 
-  const updated = await setJobDecision(id, decision);
-  if (!updated) {
-    return new Response(JSON.stringify({ error: 'Job not found.' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  return new Response(JSON.stringify({ success: true, job: updated }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  startJob(job.id, job.role_key, job.request);
+  return json({ success: true, job }, 202);
 };
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
-  if (!(await isTeamAuthenticated(cookies))) {
-    return new Response(JSON.stringify({ error: 'Not authenticated.' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  if (!(await isTeamAuthenticated(cookies))) return json({ error: 'Not authenticated.' }, 401);
 
   const id = Number(params.id);
-  if (!Number.isInteger(id)) {
-    return new Response(JSON.stringify({ error: 'Invalid job id.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
+  if (!Number.isInteger(id)) return json({ error: 'Invalid job id.' }, 400);
 
   const deleted = await deleteJob(id);
-  if (!deleted) {
-    return new Response(JSON.stringify({ error: 'Job not found.' }), {
-      status: 404,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  if (!deleted) return json({ error: 'Job not found.' }, 404);
+  return json({ success: true });
 };

@@ -48,7 +48,7 @@ ${icp}
 
 ---
 
-Important: You never publish, send, deploy, delete, or spend anything. You produce a draft or recommendation for Sam to review and approve. End your response with a clear structure: STATUS, OUTPUT, SUMMARY, FLAGS (anything that needs Sam's input or confirmation), and NEXT (what would happen next if approved).`;
+Important: You never publish, send, deploy, delete, or spend anything. You cannot open files or run tools in this setting: the brand facts, voice guide, and customer profile you need are already included above. Apply them silently. Do not say that you are reading files or running checks - just do the work. You produce drafts and recommendations only. End your response with a clear structure: STATUS, OUTPUT, SUMMARY, FLAGS (anything that needs Sam's input or confirmation), and NEXT (what would happen next once Sam says go).`;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -64,7 +64,7 @@ Important: You never publish, send, deploy, delete, or spend anything. You produ
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 2000,
       system: systemPrompt,
       messages: [{ role: 'user', content: request }],
     }),
@@ -77,5 +77,10 @@ Important: You never publish, send, deploy, delete, or spend anything. You produ
 
   const data = await response.json();
   const textBlock = data.content?.find((block: any) => block.type === 'text');
-  return textBlock?.text ?? '(No text response received.)';
+  let text = textBlock?.text ?? '(No text response received.)';
+  if (data.stop_reason === 'max_tokens') {
+    text +=
+      '\n\n[This reached the length limit and was cut off. Ask for it in smaller pieces, for example one section at a time.]';
+  }
+  return text;
 }
