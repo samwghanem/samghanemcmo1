@@ -34,7 +34,7 @@ export const TEAM_ROSTER: TeamMember[] = [
   { key: 'senior-strategist', name: 'Malik', role: 'Senior Strategist', department: 'Brand / Campaign', maxLevel: 3 },
   { key: 'junior-strategist', name: 'Ava', role: 'Junior Strategist', department: 'Brand / Campaign', maxLevel: 2 },
   { key: 'senior-copywriter', name: 'Asher', role: 'Senior Copywriter', department: 'Brand / Campaign', maxLevel: 3 },
-  { key: 'junior-copywriter', name: 'Sena', role: 'Junior Copywriter', department: 'Brand / Campaign', maxLevel: 1 },
+  { key: 'junior-copywriter', name: 'Sadie', role: 'Junior Copywriter', department: 'Brand / Campaign', maxLevel: 1 },
   { key: 'senior-art-director', name: 'Soren', role: 'Senior Art Director', department: 'Brand / Campaign', maxLevel: 3 },
   { key: 'junior-art-director', name: 'Mina', role: 'Junior Art Director', department: 'Brand / Campaign', maxLevel: 1 },
   { key: 'visual-designer', name: 'Samir', role: 'Visual Designer', department: 'Brand / Campaign', maxLevel: 2 },
@@ -62,9 +62,9 @@ export const TEAM_ROSTER: TeamMember[] = [
   { key: 'lifecycle-marketer', name: 'Santiago', role: 'Lifecycle Marketer', department: 'Growth', maxLevel: 2 },
 
   // Shared QA
-  { key: 'editor', name: 'Senna', role: 'Editor', department: 'Shared QA', maxLevel: 3 },
-  { key: 'fact-checker', name: 'Amos', role: 'Fact-Checker', department: 'Shared QA', maxLevel: 1 },
-  { key: 'compliance-reviewer', name: 'Magnus', role: 'Compliance Reviewer', department: 'Shared QA', maxLevel: 1 },
+  { key: 'editor', name: 'Sienna', role: 'Editor', department: 'Shared QA', maxLevel: 3 },
+  { key: 'fact-checker', name: 'Adrian', role: 'Fact-Checker', department: 'Shared QA', maxLevel: 1 },
+  { key: 'compliance-reviewer', name: 'Miles', role: 'Compliance Reviewer', department: 'Shared QA', maxLevel: 1 },
   { key: 'insights-analyst', name: 'Aidan', role: 'Insights Analyst', department: 'Shared QA', maxLevel: 2 },
 ];
 
