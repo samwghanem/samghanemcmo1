@@ -64,7 +64,7 @@ export const TEAM_ROSTER: TeamMember[] = [
   // Shared QA
   { key: 'editor', name: 'Sienna', role: 'Editor', department: 'Shared QA', maxLevel: 3 },
   { key: 'fact-checker', name: 'Adrian', role: 'Fact-Checker', department: 'Shared QA', maxLevel: 1 },
-  { key: 'compliance-reviewer', name: 'Miles', role: 'Compliance Reviewer', department: 'Shared QA', maxLevel: 1 },
+  { key: 'compliance-reviewer', name: 'Myles', role: 'Compliance Reviewer', department: 'Shared QA', maxLevel: 1 },
   { key: 'insights-analyst', name: 'Aidan', role: 'Insights Analyst', department: 'Shared QA', maxLevel: 2 },
 ];
 
