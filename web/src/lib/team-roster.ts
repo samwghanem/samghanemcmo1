@@ -72,3 +72,9 @@ export function getMember(key: string): TeamMember | undefined {
   return TEAM_ROSTER.find((m) => m.key === key);
 }
 
+
+// Each team member's headshot lives at /team/<first-name-lowercase>.jpg
+// (files in web/public/team/). If someone is renamed, rename their file too.
+export function photoUrl(name: string): string {
+  return `/team/${name.toLowerCase()}.jpg`;
+}

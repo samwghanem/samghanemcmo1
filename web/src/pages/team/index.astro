@@ -3,7 +3,7 @@ export const prerender = false;
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { isTeamAuthenticated, getTeamSessionEmail } from '../../lib/team-auth';
 import { getAllJobs } from '../../lib/team-db';
-import { TEAM_ROSTER, DEPARTMENTS } from '../../lib/team-roster';
+import { TEAM_ROSTER, DEPARTMENTS, photoUrl } from '../../lib/team-roster';
 
 if (!(await isTeamAuthenticated(Astro.cookies))) {
   return Astro.redirect('/team/login');
@@ -77,12 +77,17 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
               const level = levelFor(member.key, member.maxLevel);
               return (
                 <div class={`member-card ${c.waiting > 0 ? 'needs-attention' : ''}`}>
-                  <div class="name-row">
-                    <span class="status-dot"></span>
-                    <strong>{member.name}</strong>
-                    <span class="level-chip">Level {level} of {member.maxLevel}</span>
+                  <div class="member-top">
+                    <img class="member-photo" src={photoUrl(member.name)} alt={member.name} width="56" height="56" loading="lazy" />
+                    <div class="member-id">
+                      <div class="name-row">
+                        <span class="status-dot"></span>
+                        <strong>{member.name}</strong>
+                      </div>
+                      <p class="member-role">{member.role}</p>
+                      <span class="level-chip">Level {level} of {member.maxLevel}</span>
+                    </div>
                   </div>
-                  <p class="member-role">{member.role}</p>
                   <div class="member-stats">
                     <div><strong>{c.open}</strong><span>Open</span></div>
                     <div><strong>{c.waiting}</strong><span>Waiting on you</span></div>
@@ -388,7 +393,26 @@ const errorJobs = jobs.filter((j) => j.status === 'error');
     border: 1px solid var(--line);
     border-radius: 999px;
     padding: 0.15em 0.6em;
-    margin-left: auto;
+    display: inline-block;
+    margin-top: 0.4em;
+  }
+  .member-top {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    margin-bottom: 0.8em;
+  }
+  .member-photo {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    background: var(--paper);
+  }
+  .member-id {
+    min-width: 0;
   }
   .member-role {
     font-size: 0.78rem;
